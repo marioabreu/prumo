@@ -1,0 +1,25 @@
+{
+  "name": "@prumo/server",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@apollo/server": "^5.0.0",
+    "@prisma/client": "^5.11.0",
+    "graphql": "^16.8.1",
+    "dataloader": "^2.2.2",
+    "express": "^5.0.0",
+    "@as-integrations/express5": "^1.1.0",
+    "@prumo/shared": "*"
+  },
+  "devDependencies": {
+    "prisma": "^5.11.0",
+    "tsx": "^4.7.0",
+    "vitest": "^1.4.0"
+  }
+}
