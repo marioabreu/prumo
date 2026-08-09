@@ -1,3 +1,4 @@
+name: prumo
 services:
   db:
     image: postgres:16
