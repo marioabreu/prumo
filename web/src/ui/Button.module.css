@@ -1,0 +1,33 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2) var(--ui-space-4);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.primary {
+  background: var(--ui-bg-selected);
+  color: var(--ui-fg-on-selected);
+}
+
+.secondary {
+  background: var(--ui-bg-card);
+  color: var(--ui-fg);
+  border-color: var(--ui-border-strong);
+}
+
+.danger {
+  background: var(--ui-danger-bg);
+  color: var(--ui-danger);
+  border-color: var(--ui-danger-bg);
+}

@@ -1,0 +1,18 @@
+.glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 10px;
+  font-family: var(--ui-font-mono);
+  line-height: 1;
+}
+
+.onLight {
+  background: var(--ui-bg-hover);
+  color: var(--ui-fg-muted);
+}

@@ -1,0 +1,63 @@
+:root {
+  --ui-bg-page: #f7f7f8;
+  --ui-bg-card: #ffffff;
+  --ui-bg-hover: #f4f4f5;
+  --ui-bg-selected: #18181b;
+
+  --ui-fg: #18181b;
+  --ui-fg-on-selected: #ffffff;
+  --ui-fg-muted: #71717a;
+  --ui-fg-subtle: #a1a1aa;
+
+  --ui-border: #e4e4e7;
+  --ui-border-strong: #d4d4d8;
+
+  --ui-success: #16a34a;
+  --ui-success-bg: #f0fdf4;
+  --ui-warning: #d97706;
+  --ui-warning-bg: #fffbeb;
+  --ui-danger: #dc2626;
+  --ui-danger-bg: #fef2f2;
+
+  --ui-radius-sm: 6px;
+  --ui-radius: 10px;
+  --ui-radius-pill: 999px;
+
+  --ui-shadow-card: 0 1px 2px rgba(24, 24, 27, 0.04), 0 1px 1px rgba(24, 24, 27, 0.03);
+
+  --ui-font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  --ui-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+  --ui-space-8: 32px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ui-bg-page);
+  color: var(--ui-fg);
+  font-family: var(--ui-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+}

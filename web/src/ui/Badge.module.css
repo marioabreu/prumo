@@ -1,0 +1,24 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-1) var(--ui-space-3);
+  border-radius: var(--ui-radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.neutral {
+  background: var(--ui-bg-hover);
+  color: var(--ui-fg-muted);
+}
+
+.success {
+  background: var(--ui-success-bg);
+  color: var(--ui-success);
+}
+
+.warning {
+  background: var(--ui-warning-bg);
+  color: var(--ui-warning);
+}

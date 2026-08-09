@@ -1,0 +1,24 @@
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pending {
+  background: var(--ui-warning);
+}
+
+.confirmed {
+  background: var(--ui-success);
+}
+
+.deferred,
+.inactive {
+  background: var(--ui-border-strong);
+}
+
+.active {
+  background: var(--ui-success);
+}
