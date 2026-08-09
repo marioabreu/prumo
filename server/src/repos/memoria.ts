@@ -1,14 +1,18 @@
 import { randomUUID } from "node:crypto";
 import type {
-  Repos, Obra, Fornecedor, Despesa, CriarDespesaInput,
-  AtualizarValoresInput, TotalObra, EstadoDespesa,
+  Repos, Obra, Fornecedor, Utilizador, Despesa, CriarDespesaInput,
+  AtualizarValoresInput, TotalObra, DespesasFiltro,
+  CriarObraInput, AtualizarObraInput,
+  CriarFornecedorInput, AtualizarFornecedorInput,
+  CriarUtilizadorInput, AtualizarUtilizadorInput,
 } from "./types.js";
-import { lockAtivoDeOutro, LOCK_TTL_MS } from "./types.js";
+import { lockAtivoDeOutro, LOCK_TTL_MS, ERRO_OBRA_EM_USO, ERRO_FORNECEDOR_EM_USO } from "./types.js";
 
 /** Impl. em memória para testes de resolvers. Usa `number` só por conveniência — NUNCA copiar isto para o impl. Prisma (ver CLAUDE.md decisão #1). */
 export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
   const obras = new Map<string, Obra>();
   const fornecedores = new Map<string, Fornecedor>();
+  const utilizadores = new Map<string, Utilizador>();
   const despesas = new Map<string, Despesa>();
 
   for (const o of seedObras) {
@@ -22,13 +26,47 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
     );
   }
 
+  function obraEmUso(obraId: string) {
+    return [...despesas.values()].some((d) => d.obraId === obraId);
+  }
+
+  function fornecedorEmUso(fornecedorId: string) {
+    return [...despesas.values()].some((d) => d.fornecedorId === fornecedorId);
+  }
+
   return {
     obras: {
       async listar() { return [...obras.values()]; },
       async ativas() { return [...obras.values()].filter((o) => o.ativa); },
       async obterPorId(id) { return obras.get(id) ?? null; },
+      async criar(input: CriarObraInput) {
+        if ([...obras.values()].some((o) => o.nome === input.nome)) {
+          throw new Error(`Já existe uma obra com o nome "${input.nome}"`);
+        }
+        const id = randomUUID();
+        const obra: Obra = { id, nome: input.nome, ativa: input.ativa ?? true };
+        obras.set(id, obra);
+        return obra;
+      },
+      async atualizar(id, patch: AtualizarObraInput) {
+        const obra = obras.get(id);
+        if (!obra) throw new Error(`Obra ${id} não encontrada`);
+        if (patch.nome && patch.nome !== obra.nome) {
+          if ([...obras.values()].some((o) => o.id !== id && o.nome === patch.nome)) {
+            throw new Error(`Já existe uma obra com o nome "${patch.nome}"`);
+          }
+        }
+        Object.assign(obra, patch);
+        return obra;
+      },
+      async eliminar(id) {
+        if (!obras.has(id)) throw new Error(`Obra ${id} não encontrada`);
+        if (obraEmUso(id)) throw new Error(ERRO_OBRA_EM_USO);
+        obras.delete(id);
+      },
     },
     fornecedores: {
+      async listar() { return [...fornecedores.values()]; },
       async obterPorNif(nif) {
         return [...fornecedores.values()].find((f) => f.nif === nif) ?? null;
       },
@@ -40,11 +78,66 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
         fornecedores.set(id, f);
         return f;
       },
+      async criar(input: CriarFornecedorInput) {
+        if ([...fornecedores.values()].some((f) => f.nif === input.nif)) {
+          throw new Error(`Já existe um fornecedor com o NIF "${input.nif}"`);
+        }
+        const id = randomUUID();
+        const f: Fornecedor = {
+          id, nif: input.nif, nome: input.nome ?? null, morada: input.morada ?? null,
+        };
+        fornecedores.set(id, f);
+        return f;
+      },
+      async atualizar(id, patch: AtualizarFornecedorInput) {
+        const f = fornecedores.get(id);
+        if (!f) throw new Error(`Fornecedor ${id} não encontrado`);
+        if (patch.nif && patch.nif !== f.nif) {
+          if ([...fornecedores.values()].some((x) => x.id !== id && x.nif === patch.nif)) {
+            throw new Error(`Já existe um fornecedor com o NIF "${patch.nif}"`);
+          }
+        }
+        Object.assign(f, patch);
+        return f;
+      },
+      async eliminar(id) {
+        if (!fornecedores.has(id)) throw new Error(`Fornecedor ${id} não encontrado`);
+        if (fornecedorEmUso(id)) throw new Error(ERRO_FORNECEDOR_EM_USO);
+        fornecedores.delete(id);
+      },
       async historico(nif, limite) {
         return [...despesas.values()]
           .filter((d) => d.nifFornecedor === nif)
           .sort((a, b) => b.criadaEm.getTime() - a.criadaEm.getTime())
           .slice(0, limite);
+      },
+    },
+    utilizadores: {
+      async listar() { return [...utilizadores.values()]; },
+      async obterPorId(id) { return utilizadores.get(id) ?? null; },
+      async criar(input: CriarUtilizadorInput) {
+        if ([...utilizadores.values()].some((u) => u.email === input.email)) {
+          throw new Error(`Já existe um utilizador com o email "${input.email}"`);
+        }
+        const id = randomUUID();
+        const u: Utilizador = { id, nome: input.nome, email: input.email };
+        utilizadores.set(id, u);
+        return u;
+      },
+      async atualizar(id, patch: AtualizarUtilizadorInput) {
+        const u = utilizadores.get(id);
+        if (!u) throw new Error(`Utilizador ${id} não encontrado`);
+        if (patch.email && patch.email !== u.email) {
+          if ([...utilizadores.values()].some((x) => x.id !== id && x.email === patch.email)) {
+            throw new Error(`Já existe um utilizador com o email "${patch.email}"`);
+          }
+        }
+        Object.assign(u, patch);
+        return u;
+      },
+      async eliminar(id) {
+        if (!utilizadores.has(id)) throw new Error(`Utilizador ${id} não encontrado`);
+        utilizadores.delete(id);
       },
     },
     despesas: {
@@ -56,7 +149,7 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
         const despesa: Despesa = {
           id,
           ...input,
-          fornecedorId: null,
+          fornecedorId: input.fornecedorId ?? null,
           obraId: null,
           estado: "POR_REVER",
           lockPorId: null,
@@ -67,9 +160,11 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
         return despesa;
       },
       async obterPorId(id) { return despesas.get(id) ?? null; },
-      async listarFila(estado?: EstadoDespesa) {
-        const todas = [...despesas.values()];
-        return estado ? todas.filter((d) => d.estado === estado) : todas;
+      async listar(filtro?: DespesasFiltro) {
+        let resultado = [...despesas.values()];
+        if (filtro?.estado) resultado = resultado.filter((d) => d.estado === filtro.estado);
+        if (filtro?.obraId) resultado = resultado.filter((d) => d.obraId === filtro.obraId);
+        return resultado;
       },
       async bloquear(id, utilizadorId) {
         const d = despesas.get(id);
