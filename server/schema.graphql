@@ -11,6 +11,13 @@ type Fornecedor {
   id: ID!
   nif: String!
   nome: String
+  morada: String
+}
+
+type Utilizador {
+  id: ID!
+  nome: String!
+  email: String!
 }
 
 type Despesa {
@@ -53,11 +60,47 @@ input AtualizarValoresInput {
   valorTotal: String
 }
 
+input CriarObraInput {
+  nome: String!
+  ativa: Boolean
+}
+
+input AtualizarObraInput {
+  nome: String
+  ativa: Boolean
+}
+
+input CriarFornecedorInput {
+  nif: String!
+  nome: String
+  morada: String
+}
+
+input AtualizarFornecedorInput {
+  nif: String
+  nome: String
+  morada: String
+}
+
+input CriarUtilizadorInput {
+  nome: String!
+  email: String!
+}
+
+input AtualizarUtilizadorInput {
+  nome: String
+  email: String
+}
+
 type Query {
   filaRevisao(estado: EstadoDespesa): [Despesa!]!
+  despesas(estado: EstadoDespesa, obraId: ID): [Despesa!]!
+  despesa(id: ID!): Despesa
   sugestaoObra(despesaId: ID!): SugestaoObra
   totaisPorObra: [TotalObra!]!
   obras: [Obra!]!
+  fornecedores: [Fornecedor!]!
+  utilizadores: [Utilizador!]!
 }
 
 type Mutation {
@@ -67,4 +110,16 @@ type Mutation {
   atualizarValores(despesaId: ID!, input: AtualizarValoresInput!): Despesa!
   confirmar(despesaId: ID!): Despesa!
   adiar(despesaId: ID!): Despesa!
+
+  criarObra(input: CriarObraInput!): Obra!
+  atualizarObra(id: ID!, input: AtualizarObraInput!): Obra!
+  eliminarObra(id: ID!): Boolean!
+
+  criarFornecedor(input: CriarFornecedorInput!): Fornecedor!
+  atualizarFornecedor(id: ID!, input: AtualizarFornecedorInput!): Fornecedor!
+  eliminarFornecedor(id: ID!): Boolean!
+
+  criarUtilizador(input: CriarUtilizadorInput!): Utilizador!
+  atualizarUtilizador(id: ID!, input: AtualizarUtilizadorInput!): Utilizador!
+  eliminarUtilizador(id: ID!): Boolean!
 }
