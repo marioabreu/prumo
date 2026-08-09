@@ -5,6 +5,7 @@ import styles from "./AppShell.module.css";
 
 const NAV_ITEMS = [
   { to: "/", label: "Fila de Revisão" },
+  { to: "/carregar-fatura", label: "Carregar Fatura" },
   { to: "/obras", label: "Obras" },
   { to: "/fornecedores", label: "Fornecedores" },
   { to: "/despesas", label: "Despesas" },
