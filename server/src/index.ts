@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
 import { readFileSync } from "node:fs";
@@ -20,6 +21,6 @@ const contexto = criarContexto(repos, {
 const app = express();
 const apollo = new ApolloServer({ typeDefs, resolvers });
 await apollo.start();
-app.use("/graphql", express.json(), expressMiddleware(apollo, { context: async () => contexto }));
+app.use("/graphql", cors(), express.json(), expressMiddleware(apollo, { context: async () => contexto }));
 
 app.listen(4000, () => console.log("GraphQL em http://localhost:4000/graphql"));
