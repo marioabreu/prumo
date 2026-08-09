@@ -23,10 +23,10 @@
 .brand {
   display: flex;
   align-items: flex-end;
-  gap: var(--ui-space-1);
+  gap: 2px;
   padding: 0 var(--ui-space-3) var(--ui-space-5);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 20px;
 }
 
 .brandIcon {
