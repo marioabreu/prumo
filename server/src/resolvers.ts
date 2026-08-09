@@ -62,7 +62,9 @@ export const resolvers = {
       );
       if (existente) return { despesa: existente, duplicada: true };
 
-      const fornecedor = await ctx.repos.fornecedores.upsert(dados.nifFornecedor);
+      const fornecedorExistente = await ctx.repos.fornecedores.obterPorNif(dados.nifFornecedor);
+      const dadosEmpresa = fornecedorExistente?.nome ? undefined : await ctx.pesquisarEmpresa(dados.nifFornecedor);
+      const fornecedor = await ctx.repos.fornecedores.upsert(dados.nifFornecedor, dadosEmpresa);
       const despesa = await ctx.repos.despesas.criar({
         ...dados, fornecedorId: fornecedor.id, ficheiroUrl: args.ficheiroUrl, qrRaw: args.qrRaw, origem: "UPLOAD",
       });

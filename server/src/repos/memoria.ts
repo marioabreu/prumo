@@ -70,11 +70,15 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
       async obterPorNif(nif) {
         return [...fornecedores.values()].find((f) => f.nif === nif) ?? null;
       },
-      async upsert(nif, nome = null) {
+      async upsert(nif, dados) {
         const existente = [...fornecedores.values()].find((f) => f.nif === nif);
-        if (existente) return existente;
+        if (existente) {
+          if (!existente.nome && dados?.nome) existente.nome = dados.nome;
+          if (!existente.morada && dados?.morada) existente.morada = dados.morada;
+          return existente;
+        }
         const id = randomUUID();
-        const f: Fornecedor = { id, nif, nome, morada: null };
+        const f: Fornecedor = { id, nif, nome: dados?.nome ?? null, morada: dados?.morada ?? null };
         fornecedores.set(id, f);
         return f;
       },

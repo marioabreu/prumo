@@ -47,11 +47,17 @@ export function criarReposPrisma(prisma: PrismaClient): Repos {
     fornecedores: {
       async listar() { return prisma.fornecedor.findMany(); },
       async obterPorNif(nif) { return prisma.fornecedor.findUnique({ where: { nif } }); },
-      async upsert(nif, nome = null) {
-        return prisma.fornecedor.upsert({
-          where: { nif },
-          update: nome ? { nome } : {},
-          create: { nif, nome },
+      async upsert(nif, dados) {
+        const existente = await prisma.fornecedor.findUnique({ where: { nif } });
+        if (existente) {
+          const patch: { nome?: string; morada?: string } = {};
+          if (!existente.nome && dados?.nome) patch.nome = dados.nome;
+          if (!existente.morada && dados?.morada) patch.morada = dados.morada;
+          if (Object.keys(patch).length === 0) return existente;
+          return prisma.fornecedor.update({ where: { nif }, data: patch });
+        }
+        return prisma.fornecedor.create({
+          data: { nif, nome: dados?.nome ?? null, morada: dados?.morada ?? null },
         });
       },
       async criar(input: CriarFornecedorInput) {

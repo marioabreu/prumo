@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from "react";
+import { useId, type InputHTMLAttributes } from "react";
 import { Label } from "./Label.js";
 import styles from "./TextField.module.css";
 
@@ -7,7 +7,8 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export function TextField({ label, id, className, ...rest }: TextFieldProps) {
-  const inputId = id ?? `field-${label.toLowerCase().replace(/\s+/g, "-")}`;
+  const idGerado = useId();
+  const inputId = id ?? idGerado;
   return (
     <div className={styles.field}>
       <label htmlFor={inputId}>

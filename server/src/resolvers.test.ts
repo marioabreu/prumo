@@ -1,11 +1,20 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { resolvers } from "./resolvers.js";
 import { criarReposMemoria } from "./repos/memoria.js";
 import { criarLoaders } from "./loaders/index.js";
+import type { PesquisarEmpresa } from "./pesquisa-empresa/pesquisar-empresa.js";
 
-function ctxDeTeste(seedObras: { nome: string; ativa: boolean }[] = []) {
+function ctxDeTeste(
+  seedObras: { nome: string; ativa: boolean }[] = [],
+  pesquisarEmpresa: PesquisarEmpresa = async () => ({ nome: null, morada: null })
+) {
   const repos = criarReposMemoria(seedObras);
-  return { repos, loaders: criarLoaders(repos), extrair: async () => { throw new Error("não usado neste teste"); } };
+  return {
+    repos,
+    loaders: criarLoaders(repos),
+    extrair: async () => { throw new Error("não usado neste teste"); },
+    pesquisarEmpresa,
+  };
 }
 
 describe("Mutation.ingerirFatura", () => {
@@ -38,6 +47,30 @@ describe("Mutation.ingerirFatura", () => {
     expect(segunda.duplicada).toBe(true);
     const fila = await ctx.repos.despesas.listar();
     expect(fila).toHaveLength(1);
+  });
+
+  it("pesquisa o nome/morada da empresa quando o fornecedor é novo e guarda-os", async () => {
+    const pesquisarEmpresa = vi.fn().mockResolvedValue({ nome: "Vodafone Portugal", morada: "Lisboa" });
+    const ctx = ctxDeTeste([], pesquisarEmpresa);
+
+    await resolvers.Mutation.ingerirFatura({}, { ficheiroUrl: "https://x/f.pdf", qrRaw }, ctx);
+
+    expect(pesquisarEmpresa).toHaveBeenCalledWith("502544180");
+    const fornecedor = await ctx.repos.fornecedores.obterPorNif("502544180");
+    expect(fornecedor?.nome).toBe("Vodafone Portugal");
+    expect(fornecedor?.morada).toBe("Lisboa");
+  });
+
+  it("não pesquisa de novo quando o fornecedor já tem nome (evita chamadas repetidas)", async () => {
+    const pesquisarEmpresa = vi.fn().mockResolvedValue({ nome: "Nome Novo Da Pesquisa", morada: null });
+    const ctx = ctxDeTeste([], pesquisarEmpresa);
+    await ctx.repos.fornecedores.criar({ nif: "502544180", nome: "Nome Definido Manualmente" });
+
+    await resolvers.Mutation.ingerirFatura({}, { ficheiroUrl: "https://x/f.pdf", qrRaw }, ctx);
+
+    expect(pesquisarEmpresa).not.toHaveBeenCalled();
+    const fornecedor = await ctx.repos.fornecedores.obterPorNif("502544180");
+    expect(fornecedor?.nome).toBe("Nome Definido Manualmente");
   });
 });
 

@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MockedProvider } from "@apollo/client/testing/react";
 import { FornecedoresScreen } from "./FornecedoresScreen.js";
-import { FORNECEDORES, CRIAR_FORNECEDOR, ELIMINAR_FORNECEDOR } from "../graphql.js";
+import { FORNECEDORES, CRIAR_FORNECEDOR, ATUALIZAR_FORNECEDOR, ELIMINAR_FORNECEDOR } from "../graphql.js";
 
 const fornecedorA = { id: "f1", nif: "502544180", nome: "Leroy Merlin", morada: null };
 
@@ -65,5 +65,29 @@ describe("FornecedoresScreen", () => {
     await user.click(screen.getByRole("button", { name: /confirmar/i }));
 
     expect(await screen.findByText(/despesas associadas/)).toBeInTheDocument();
+  });
+
+  it("permite editar o nome/morada de um fornecedor sem nome", async () => {
+    const user = userEvent.setup();
+    const semNome = { id: "f3", nif: "999999990", nome: null, morada: null };
+    const mocks = [
+      { request: { query: FORNECEDORES }, result: { data: { fornecedores: [semNome] } } },
+      {
+        request: { query: ATUALIZAR_FORNECEDOR, variables: { id: "f3", input: { nome: "Empresa Manual", morada: "Porto" } } },
+        result: { data: { atualizarFornecedor: { id: "f3", nif: "999999990", nome: "Empresa Manual", morada: "Porto" } } },
+      },
+      { request: { query: FORNECEDORES }, result: { data: { fornecedores: [{ ...semNome, nome: "Empresa Manual", morada: "Porto" }] } } },
+    ];
+    renderScreen(mocks);
+
+    await screen.findByText("999999990");
+    await user.click(screen.getByRole("button", { name: /editar/i }));
+    const camposNome = screen.getAllByLabelText(/^nome$/i);
+    const camposMorada = screen.getAllByLabelText(/^morada$/i);
+    await user.type(camposNome[camposNome.length - 1], "Empresa Manual");
+    await user.type(camposMorada[camposMorada.length - 1], "Porto");
+    await user.click(screen.getByRole("button", { name: /guardar/i }));
+
+    expect(await screen.findByText("Empresa Manual")).toBeInTheDocument();
   });
 });

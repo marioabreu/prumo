@@ -121,7 +121,7 @@ export interface Repos {
   fornecedores: {
     listar(): Promise<Fornecedor[]>;
     obterPorNif(nif: string): Promise<Fornecedor | null>;
-    upsert(nif: string, nome?: string | null): Promise<Fornecedor>;
+    upsert(nif: string, dados?: { nome?: string | null; morada?: string | null }): Promise<Fornecedor>;
     criar(input: CriarFornecedorInput): Promise<Fornecedor>;
     atualizar(id: string, patch: AtualizarFornecedorInput): Promise<Fornecedor>;
     eliminar(id: string): Promise<void>;

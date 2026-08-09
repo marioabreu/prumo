@@ -102,6 +102,22 @@ describe("criarReposMemoria", () => {
     await expect(repos.fornecedores.eliminar(outro.id)).resolves.toBeUndefined();
   });
 
+  it("fornecedores.upsert preenche nome/morada em falta mas nunca sobrescreve um nome já definido", async () => {
+    const repos = criarReposMemoria();
+
+    const criado = await repos.fornecedores.upsert("502544180", { nome: "Empresa A", morada: "Lisboa" });
+    expect(criado.nome).toBe("Empresa A");
+
+    const semAlterar = await repos.fornecedores.upsert("502544180", { nome: "Nome Diferente", morada: "Porto" });
+    expect(semAlterar.nome).toBe("Empresa A");
+    expect(semAlterar.morada).toBe("Lisboa");
+
+    const semNome = await repos.fornecedores.criar({ nif: "241489830" });
+    const preenchido = await repos.fornecedores.upsert("241489830", { nome: "Preenchido Agora", morada: null });
+    expect(preenchido.id).toBe(semNome.id);
+    expect(preenchido.nome).toBe("Preenchido Agora");
+  });
+
   it("utilizadores.criar rejeita email duplicado; eliminar não tem guard", async () => {
     const repos = criarReposMemoria();
     const u = await repos.utilizadores.criar({ nome: "Ana", email: "ana@exemplo.pt" });
