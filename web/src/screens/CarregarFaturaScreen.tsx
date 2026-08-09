@@ -6,17 +6,20 @@ import { rasterizadorBrowser } from "../upload/rasterizadorBrowser.js";
 import { visaoIndisponivel } from "../upload/visaoIndisponivel.js";
 import { Card } from "../ui/Card.js";
 import { Toast } from "../ui/Toast.js";
+import { ToastStack } from "../ui/ToastStack.js";
 import { StatRow } from "../ui/StatRow.js";
 import styles from "./CarregarFaturaScreen.module.css";
 
 const extrairPadrao = (ficheiro: ArrayBuffer, mime: string): Promise<ResultadoExtracao> =>
   extrairFatura(ficheiro, mime, { rasterizador: rasterizadorBrowser, visao: visaoIndisponivel });
 
-type Estado =
-  | { fase: "idle" }
-  | { fase: "processando" }
-  | { fase: "erro"; mensagem: string }
-  | { fase: "sucesso"; duplicada: boolean; extraido: ResultadoExtracao };
+type ItemProcessamento =
+  | { id: string; nomeFicheiro: string; fase: "processando" }
+  | { id: string; nomeFicheiro: string; fase: "erro"; mensagem: string }
+  | { id: string; nomeFicheiro: string; fase: "sucesso"; duplicada: boolean; extraido: ResultadoExtracao };
+
+type DistributiveOmit<T, K extends string> = T extends unknown ? Omit<T, K> : never;
+type PatchItem = DistributiveOmit<ItemProcessamento, "id" | "nomeFicheiro">;
 
 export function CarregarFaturaScreen({
   extrair = extrairPadrao,
@@ -24,10 +27,13 @@ export function CarregarFaturaScreen({
   extrair?: (ficheiro: ArrayBuffer, mime: string) => Promise<ResultadoExtracao>;
 }) {
   const [ingerirFatura] = useMutation(INGERIR_FATURA);
-  const [estado, setEstado] = useState<Estado>({ fase: "idle" });
+  const [itens, setItens] = useState<ItemProcessamento[]>([]);
 
-  async function processarFicheiro(ficheiro: File) {
-    setEstado({ fase: "processando" });
+  function atualizarItem(id: string, patch: PatchItem) {
+    setItens((atual) => atual.map((item) => (item.id === id ? ({ ...item, ...patch } as ItemProcessamento) : item)));
+  }
+
+  async function processarFicheiro(id: string, ficheiro: File) {
     try {
       const buffer = await ficheiro.arrayBuffer();
       const extraido = await extrair(buffer, ficheiro.type);
@@ -41,56 +47,82 @@ export function CarregarFaturaScreen({
 
       const { data } = await ingerirFatura({ variables: { ficheiroUrl, qrRaw: extraido.qrRaw } });
       const resultado = data!.ingerirFatura;
-      setEstado({ fase: "sucesso", duplicada: resultado.duplicada, extraido });
+      atualizarItem(id, { fase: "sucesso", duplicada: resultado.duplicada, extraido });
     } catch (e) {
-      setEstado({ fase: "erro", mensagem: e instanceof Error ? e.message : "Erro desconhecido." });
+      atualizarItem(id, { fase: "erro", mensagem: e instanceof Error ? e.message : "Erro desconhecido." });
     }
   }
 
-  function aoEscolherFicheiro(e: ChangeEvent<HTMLInputElement>) {
-    const ficheiro = e.target.files?.[0];
-    if (ficheiro) void processarFicheiro(ficheiro);
+  async function processarFicheiros(ficheiros: File[]) {
+    const novosItens: ItemProcessamento[] = ficheiros.map((ficheiro) => ({
+      id: crypto.randomUUID(),
+      nomeFicheiro: ficheiro.name,
+      fase: "processando",
+    }));
+    setItens((atual) => [...atual, ...novosItens]);
+
+    for (let i = 0; i < ficheiros.length; i++) {
+      await processarFicheiro(novosItens[i].id, ficheiros[i]);
+    }
+  }
+
+  function aoEscolherFicheiros(e: ChangeEvent<HTMLInputElement>) {
+    const ficheiros = Array.from(e.target.files ?? []);
+    if (ficheiros.length > 0) void processarFicheiros(ficheiros);
     e.target.value = "";
   }
 
-  function fecharToast() {
-    setEstado({ fase: "idle" });
+  function fecharToast(id: string) {
+    setItens((atual) => atual.filter((item) => item.id !== id));
   }
+
+  const aProcessar = itens.some((item) => item.fase === "processando");
 
   return (
     <div className={styles.page}>
       <div className={styles.title}>Carregar Fatura</div>
       <Card>
         <label className={styles.dropzone}>
-          <input type="file" accept="image/*,application/pdf" capture="environment" onChange={aoEscolherFicheiro} />
+          <input
+            type="file"
+            multiple
+            accept="image/*,application/pdf"
+            capture="environment"
+            onChange={aoEscolherFicheiros}
+          />
           Escolher ficheiro ou tirar foto
         </label>
 
-        {estado.fase === "processando" && <p>A ler o QR da fatura...</p>}
+        {aProcessar && <p>A ler fatura(s)...</p>}
       </Card>
 
-      {estado.fase === "erro" && (
-        <Toast tone="danger" title="Não foi possível ler a fatura" onClose={fecharToast}>
-          <p className={styles.erro}>{estado.mensagem}</p>
-        </Toast>
-      )}
-
-      {estado.fase === "sucesso" && (
-        <Toast
-          tone={estado.duplicada ? "warning" : "success"}
-          title={estado.duplicada ? "Fatura já lida antes" : "Despesa criada"}
-          onClose={fecharToast}
-        >
-          <StatRow label="Fornecedor (NIF)" value={estado.extraido.nifFornecedor} />
-          <StatRow label="NIF válido" value={estado.extraido.nifValido ? "Sim" : "Não"} />
-          <StatRow label="Número" value={estado.extraido.numeroFatura} />
-          <StatRow label="Data" value={estado.extraido.dataFatura} />
-          <StatRow label="Base tributável" value={`${estado.extraido.baseTributavel} €`} />
-          <StatRow label="IVA" value={`${estado.extraido.valorIva} €`} />
-          <StatRow label="Total" value={`${estado.extraido.valorTotal} €`} emphasized />
-          <StatRow label="Origem da leitura" value={estado.extraido.fonte === "qr" ? "QR" : "Visão"} />
-        </Toast>
-      )}
+      <ToastStack>
+        {itens
+          .filter((item) => item.fase !== "processando")
+          .map((item) =>
+            item.fase === "erro" ? (
+              <Toast key={item.id} tone="danger" title={`Não foi possível ler: ${item.nomeFicheiro}`} onClose={() => fecharToast(item.id)}>
+                <p className={styles.erro}>{item.mensagem}</p>
+              </Toast>
+            ) : (
+              <Toast
+                key={item.id}
+                tone={item.duplicada ? "warning" : "success"}
+                title={item.duplicada ? `Fatura já lida antes: ${item.nomeFicheiro}` : "Despesa criada"}
+                onClose={() => fecharToast(item.id)}
+              >
+                <StatRow label="Fornecedor (NIF)" value={item.extraido.nifFornecedor} />
+                <StatRow label="NIF válido" value={item.extraido.nifValido ? "Sim" : "Não"} />
+                <StatRow label="Número" value={item.extraido.numeroFatura} />
+                <StatRow label="Data" value={item.extraido.dataFatura} />
+                <StatRow label="Base tributável" value={`${item.extraido.baseTributavel} €`} />
+                <StatRow label="IVA" value={`${item.extraido.valorIva} €`} />
+                <StatRow label="Total" value={`${item.extraido.valorTotal} €`} emphasized />
+                <StatRow label="Origem da leitura" value={item.extraido.fonte === "qr" ? "QR" : "Visão"} />
+              </Toast>
+            )
+          )}
+      </ToastStack>
     </div>
   );
 }

@@ -1,10 +1,6 @@
 .toast {
-  position: fixed;
-  bottom: var(--ui-space-5);
-  right: var(--ui-space-5);
   width: 320px;
   max-width: calc(100vw - var(--ui-space-5) * 2);
-  z-index: 100;
   animation: entrar 0.15s ease-out;
 }
 
