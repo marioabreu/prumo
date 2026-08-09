@@ -1,8 +1,12 @@
-import type { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import type {
-  Repos, CriarDespesaInput, AtualizarValoresInput, TotalObra, EstadoDespesa,
+  Repos, CriarDespesaInput, AtualizarValoresInput, TotalObra, DespesasFiltro,
+  CriarObraInput, AtualizarObraInput,
+  CriarFornecedorInput, AtualizarFornecedorInput,
+  CriarUtilizadorInput, AtualizarUtilizadorInput,
 } from "./types.js";
-import { lockAtivoDeOutro, LOCK_TTL_MS } from "./types.js";
+import { lockAtivoDeOutro, LOCK_TTL_MS, ERRO_OBRA_EM_USO, ERRO_FORNECEDOR_EM_USO } from "./types.js";
 
 function paraDominio(d: {
   baseTributavel: Prisma.Decimal; valorIva: Prisma.Decimal; valorTotal: Prisma.Decimal;
@@ -15,14 +19,33 @@ function paraDominio(d: {
   } as any;
 }
 
+function ehViolacaoDeFK(e: unknown): boolean {
+  return e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003";
+}
+
 export function criarReposPrisma(prisma: PrismaClient): Repos {
   return {
     obras: {
       async listar() { return prisma.obra.findMany(); },
       async ativas() { return prisma.obra.findMany({ where: { ativa: true } }); },
       async obterPorId(id) { return prisma.obra.findUnique({ where: { id } }); },
+      async criar(input: CriarObraInput) {
+        return prisma.obra.create({ data: { nome: input.nome, ativa: input.ativa ?? true } });
+      },
+      async atualizar(id, patch: AtualizarObraInput) {
+        return prisma.obra.update({ where: { id }, data: patch });
+      },
+      async eliminar(id) {
+        try {
+          await prisma.obra.delete({ where: { id } });
+        } catch (e) {
+          if (ehViolacaoDeFK(e)) throw new Error(ERRO_OBRA_EM_USO);
+          throw e;
+        }
+      },
     },
     fornecedores: {
+      async listar() { return prisma.fornecedor.findMany(); },
       async obterPorNif(nif) { return prisma.fornecedor.findUnique({ where: { nif } }); },
       async upsert(nif, nome = null) {
         return prisma.fornecedor.upsert({
@@ -31,6 +54,22 @@ export function criarReposPrisma(prisma: PrismaClient): Repos {
           create: { nif, nome },
         });
       },
+      async criar(input: CriarFornecedorInput) {
+        return prisma.fornecedor.create({
+          data: { nif: input.nif, nome: input.nome ?? null, morada: input.morada ?? null },
+        });
+      },
+      async atualizar(id, patch: AtualizarFornecedorInput) {
+        return prisma.fornecedor.update({ where: { id }, data: patch });
+      },
+      async eliminar(id) {
+        try {
+          await prisma.fornecedor.delete({ where: { id } });
+        } catch (e) {
+          if (ehViolacaoDeFK(e)) throw new Error(ERRO_FORNECEDOR_EM_USO);
+          throw e;
+        }
+      },
       async historico(nif, limite) {
         const rows = await prisma.despesa.findMany({
           where: { nifFornecedor: nif },
@@ -38,6 +77,19 @@ export function criarReposPrisma(prisma: PrismaClient): Repos {
           take: limite,
         });
         return rows.map(paraDominio);
+      },
+    },
+    utilizadores: {
+      async listar() { return prisma.utilizador.findMany(); },
+      async obterPorId(id) { return prisma.utilizador.findUnique({ where: { id } }); },
+      async criar(input: CriarUtilizadorInput) {
+        return prisma.utilizador.create({ data: { nome: input.nome, email: input.email } });
+      },
+      async atualizar(id, patch: AtualizarUtilizadorInput) {
+        return prisma.utilizador.update({ where: { id }, data: patch });
+      },
+      async eliminar(id) {
+        await prisma.utilizador.delete({ where: { id } });
       },
     },
     despesas: {
@@ -55,9 +107,9 @@ export function criarReposPrisma(prisma: PrismaClient): Repos {
         const row = await prisma.despesa.findUnique({ where: { id } });
         return row ? paraDominio(row) : null;
       },
-      async listarFila(estado?: EstadoDespesa) {
+      async listar(filtro?: DespesasFiltro) {
         const rows = await prisma.despesa.findMany({
-          where: estado ? { estado } : undefined,
+          where: { estado: filtro?.estado, obraId: filtro?.obraId },
           orderBy: { criadaEm: "asc" },
         });
         return rows.map(paraDominio);
