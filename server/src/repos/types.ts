@@ -13,6 +13,12 @@ export interface Fornecedor {
   morada: string | null;
 }
 
+export interface Utilizador {
+  id: string;
+  nome: string;
+  email: string;
+}
+
 export interface Despesa {
   id: string;
   nifFornecedor: string;
@@ -34,6 +40,7 @@ export interface Despesa {
 
 export interface CriarDespesaInput {
   nifFornecedor: string;
+  fornecedorId?: string | null;
   numeroFatura: string;
   dataFatura: string;
   baseTributavel: string;
@@ -50,6 +57,43 @@ export interface AtualizarValoresInput {
   valorTotal?: string;
 }
 
+export interface DespesasFiltro {
+  estado?: EstadoDespesa;
+  obraId?: string;
+}
+
+export interface CriarObraInput {
+  nome: string;
+  ativa?: boolean;
+}
+
+export interface AtualizarObraInput {
+  nome?: string;
+  ativa?: boolean;
+}
+
+export interface CriarFornecedorInput {
+  nif: string;
+  nome?: string | null;
+  morada?: string | null;
+}
+
+export interface AtualizarFornecedorInput {
+  nif?: string;
+  nome?: string | null;
+  morada?: string | null;
+}
+
+export interface CriarUtilizadorInput {
+  nome: string;
+  email: string;
+}
+
+export interface AtualizarUtilizadorInput {
+  nome?: string;
+  email?: string;
+}
+
 export interface TotalObra {
   obraId: string;
   total: string;
@@ -57,16 +101,38 @@ export interface TotalObra {
 
 export const LOCK_TTL_MS = 5 * 60 * 1000;
 
+// Mensagens partilhadas pelo guard de eliminação — memoria.ts e prisma.ts têm de
+// devolver exatamente o mesmo texto para que os testes de resolvers (escritos só
+// contra o repo em memória) valham para os dois backends.
+export const ERRO_OBRA_EM_USO =
+  "Não é possível eliminar: existem despesas associadas a esta obra.";
+export const ERRO_FORNECEDOR_EM_USO =
+  "Não é possível eliminar: existem despesas associadas a este fornecedor.";
+
 export interface Repos {
   obras: {
     listar(): Promise<Obra[]>;
     ativas(): Promise<Obra[]>;
     obterPorId(id: string): Promise<Obra | null>;
+    criar(input: CriarObraInput): Promise<Obra>;
+    atualizar(id: string, patch: AtualizarObraInput): Promise<Obra>;
+    eliminar(id: string): Promise<void>;
   };
   fornecedores: {
+    listar(): Promise<Fornecedor[]>;
     obterPorNif(nif: string): Promise<Fornecedor | null>;
     upsert(nif: string, nome?: string | null): Promise<Fornecedor>;
+    criar(input: CriarFornecedorInput): Promise<Fornecedor>;
+    atualizar(id: string, patch: AtualizarFornecedorInput): Promise<Fornecedor>;
+    eliminar(id: string): Promise<void>;
     historico(nif: string, limite: number): Promise<Despesa[]>;
+  };
+  utilizadores: {
+    listar(): Promise<Utilizador[]>;
+    obterPorId(id: string): Promise<Utilizador | null>;
+    criar(input: CriarUtilizadorInput): Promise<Utilizador>;
+    atualizar(id: string, patch: AtualizarUtilizadorInput): Promise<Utilizador>;
+    eliminar(id: string): Promise<void>;
   };
   despesas: {
     obterPorChaveDedup(
@@ -76,7 +142,7 @@ export interface Repos {
     ): Promise<Despesa | null>;
     criar(input: CriarDespesaInput): Promise<Despesa>;
     obterPorId(id: string): Promise<Despesa | null>;
-    listarFila(estado?: EstadoDespesa): Promise<Despesa[]>;
+    listar(filtro?: DespesasFiltro): Promise<Despesa[]>;
     bloquear(id: string, utilizadorId: string): Promise<Despesa>;
     atribuirObra(id: string, obraId: string): Promise<Despesa>;
     atualizarValores(id: string, patch: AtualizarValoresInput): Promise<Despesa>;
