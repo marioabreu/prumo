@@ -1,0 +1,59 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  flex-shrink: 0;
+  padding: var(--ui-space-5) var(--ui-space-3);
+  border-right: 1px solid var(--ui-border);
+  background: var(--ui-bg-card);
+}
+
+.brand {
+  padding: 0 var(--ui-space-3) var(--ui-space-5);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.link {
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  color: var(--ui-fg-muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.link:hover {
+  background: var(--ui-bg-hover);
+  color: var(--ui-fg);
+}
+
+.linkActive {
+  background: var(--ui-bg-selected);
+  color: var(--ui-fg-on-selected);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: var(--ui-space-6);
+}
