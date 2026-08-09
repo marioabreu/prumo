@@ -41,12 +41,35 @@
 }
 
 .link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
   padding: var(--ui-space-2) var(--ui-space-3);
   border-radius: var(--ui-radius-sm);
   color: var(--ui-fg-muted);
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
+}
+
+.navCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-bg-hover);
+  color: var(--ui-fg-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.linkActive .navCount {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--ui-fg-on-selected);
 }
 
 .link:hover {

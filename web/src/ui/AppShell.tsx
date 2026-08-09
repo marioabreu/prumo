@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import { useQuery } from "@apollo/client/react";
+import { FILA_REVISAO } from "../graphql.js";
 import { KeyboardShortcutBar, type ShortcutHint } from "./KeyboardShortcutBar.js";
 import styles from "./AppShell.module.css";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Fila de Revisão" },
+  { to: "/", label: "Fila de Revisão", contador: true },
   { to: "/carregar-fatura", label: "Carregar Fatura" },
   { to: "/obras", label: "Obras" },
   { to: "/fornecedores", label: "Fornecedores" },
@@ -31,6 +33,8 @@ export function useShortcutBar(shortcuts: ShortcutHint[]) {
 
 export function AppShell({ children }: { children?: ReactNode }) {
   const [shortcuts, setShortcuts] = useState<ShortcutHint[]>([]);
+  const { data } = useQuery(FILA_REVISAO, { fetchPolicy: "cache-and-network" });
+  const porRever = data?.filaRevisao.length;
 
   return (
     <ShortcutsContext.Provider value={setShortcuts}>
@@ -49,7 +53,8 @@ export function AppShell({ children }: { children?: ReactNode }) {
                   end={item.to === "/"}
                   className={({ isActive }) => [styles.link, isActive ? styles.linkActive : ""].filter(Boolean).join(" ")}
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  {item.contador && porRever ? <span className={styles.navCount}>{porRever}</span> : null}
                 </NavLink>
               ))}
             </div>
