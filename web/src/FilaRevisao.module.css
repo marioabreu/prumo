@@ -1,0 +1,127 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+  height: 100%;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-4);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.counts {
+  color: var(--ui-fg-muted);
+  font-size: 13px;
+}
+
+.progressWrap {
+  flex: 1;
+  max-width: 240px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr 240px;
+  gap: var(--ui-space-4);
+  flex: 1;
+  min-height: 0;
+}
+
+.list {
+  overflow-y: auto;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+  overflow-y: auto;
+}
+
+.docCard {
+  display: flex;
+  gap: var(--ui-space-4);
+}
+
+.docPlaceholder {
+  width: 72px;
+  height: 96px;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-bg-hover);
+  flex-shrink: 0;
+}
+
+.docInfo {
+  flex: 1;
+}
+
+.fornecedorNome {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.fornecedorMeta {
+  color: var(--ui-fg-muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.obraPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  margin-bottom: var(--ui-space-3);
+}
+
+.searchWrap {
+  width: 160px;
+}
+
+.sugestao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-success-bg);
+  color: var(--ui-success);
+  font-size: 13px;
+  margin-bottom: var(--ui-space-3);
+}
+
+.obraGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+}
+
+.actions {
+  display: flex;
+  gap: var(--ui-space-2);
+}
+
+.editFields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ui-space-3);
+}
+
+.totaisTitle {
+  margin-bottom: var(--ui-space-2);
+}
+
+.empty {
+  padding: var(--ui-space-5);
+  color: var(--ui-fg-muted);
+  font-size: 13px;
+}

@@ -8,7 +8,10 @@ export interface Despesa {
   fornecedor: { nome: string | null } | null;
   numeroFatura: string;
   dataFatura: string;
+  baseTributavel: string;
+  valorIva: string;
   valorTotal: string;
+  qrRaw: string | null;
   estado: EstadoDespesa;
 }
 
@@ -20,8 +23,25 @@ export const FILA_REVISAO: TypedDocumentNode<{ filaRevisao: Despesa[] }> = gql`
       fornecedor { nome }
       numeroFatura
       dataFatura
+      baseTributavel
+      valorIva
       valorTotal
+      qrRaw
       estado
+    }
+  }
+`;
+
+export interface TotalObra {
+  obra: { id: string; nome: string };
+  total: string;
+}
+
+export const TOTAIS_POR_OBRA: TypedDocumentNode<{ totaisPorObra: TotalObra[] }> = gql`
+  query TotaisPorObra {
+    totaisPorObra {
+      obra { id nome }
+      total
     }
   }
 `;
