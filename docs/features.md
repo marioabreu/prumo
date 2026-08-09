@@ -11,6 +11,7 @@ feito e a correr em produção (não só em código).
 - [x] Toast com todos os dados lidos da fatura após upload
 - [x] Fila de revisão atualiza sozinha ao voltar (sem refresh manual)
 - [x] Carregar várias faturas de uma vez (upload múltiplo)
+- [x] Ícone/favicon próprio da app (plumb bob)
 
 ## Por fazer
 
