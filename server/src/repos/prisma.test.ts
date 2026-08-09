@@ -8,6 +8,8 @@ const prisma = new PrismaClient();
 beforeEach(async () => {
   await prisma.despesa.deleteMany();
   await prisma.fornecedor.deleteMany();
+  await prisma.obra.deleteMany();
+  await prisma.utilizador.deleteMany();
 });
 
 afterAll(async () => {
@@ -32,7 +34,6 @@ describe("constraint de dedup", () => {
 
 describe("criarReposPrisma — totaisPorObra em SQL", () => {
   it("soma em SQL, não em JS, e devolve string com 2 casas decimais", async () => {
-    await prisma.obra.deleteMany();
     const obra = await prisma.obra.create({ data: { nome: "Obra Sul" } });
     const repos = criarReposPrisma(prisma);
     const d = await repos.despesas.criar({
@@ -58,5 +59,53 @@ describe("criarReposPrisma — totaisPorObra em SQL", () => {
       repos.despesas.criar({ ...dados, ficheiroUrl: "https://exemplo/f3.pdf", qrRaw, origem: "UPLOAD" })
     ).resolves.toMatchObject({ nifFornecedor: "502544180" });
     expect(nifValido).toBe(true);
+  });
+});
+
+describe("guard de eliminação (FK ON DELETE RESTRICT, real Postgres)", () => {
+  it("obras.eliminar rejeita quando há uma despesa associada, e apaga quando não há nenhuma", async () => {
+    const repos = criarReposPrisma(prisma);
+    const obra = await repos.obras.criar({ nome: "Obra Guard" });
+    const despesa = await repos.despesas.criar({
+      nifFornecedor: "502544180", numeroFatura: "FT 300", dataFatura: "2026-08-01",
+      baseTributavel: "1.00", valorIva: "0.23", valorTotal: "1.23",
+      ficheiroUrl: "https://exemplo/f4.pdf", qrRaw: null, origem: "UPLOAD",
+    });
+    await repos.despesas.atribuirObra(despesa.id, obra.id);
+
+    await expect(repos.obras.eliminar(obra.id)).rejects.toThrow(/despesas associadas/);
+    expect(await repos.obras.obterPorId(obra.id)).not.toBeNull();
+
+    const semUso = await repos.obras.criar({ nome: "Obra Sem Uso" });
+    await expect(repos.obras.eliminar(semUso.id)).resolves.toBeUndefined();
+    expect(await repos.obras.obterPorId(semUso.id)).toBeNull();
+  });
+
+  it("fornecedores.eliminar rejeita quando há uma despesa associada via fornecedorId", async () => {
+    const repos = criarReposPrisma(prisma);
+    const fornecedor = await repos.fornecedores.criar({ nif: "502544180", nome: "Leroy Merlin" });
+    await repos.despesas.criar({
+      nifFornecedor: fornecedor.nif, fornecedorId: fornecedor.id, numeroFatura: "FT 301",
+      dataFatura: "2026-08-01", baseTributavel: "1.00", valorIva: "0.23", valorTotal: "1.23",
+      ficheiroUrl: "https://exemplo/f5.pdf", qrRaw: null, origem: "UPLOAD",
+    });
+
+    await expect(repos.fornecedores.eliminar(fornecedor.id)).rejects.toThrow(/despesas associadas/);
+    expect(await repos.fornecedores.obterPorNif(fornecedor.nif)).not.toBeNull();
+
+    const semUso = await repos.fornecedores.criar({ nif: "241489830" });
+    await expect(repos.fornecedores.eliminar(semUso.id)).resolves.toBeUndefined();
+  });
+
+  it("ingerirFatura via qrParaDespesa liga fornecedorId — o guard passa a ter algo para bloquear", async () => {
+    const repos = criarReposPrisma(prisma);
+    const fornecedor = await repos.fornecedores.upsert("502544180");
+    const qrRaw = "A:502544180*D:FT*F:20260809*G:FT 900*O:9.99";
+    const { nifValido: _nifValido, ...dados } = qrParaDespesa(qrRaw);
+    await repos.despesas.criar({
+      ...dados, fornecedorId: fornecedor.id, ficheiroUrl: "https://exemplo/f6.pdf", qrRaw, origem: "UPLOAD",
+    });
+
+    await expect(repos.fornecedores.eliminar(fornecedor.id)).rejects.toThrow(/despesas associadas/);
   });
 });
