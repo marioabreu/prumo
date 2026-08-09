@@ -4,6 +4,8 @@ import { client } from "./apollo.js";
 import { AppShell } from "./ui/AppShell.js";
 import { FilaRevisao } from "./FilaRevisao.js";
 import { ObrasScreen } from "./screens/ObrasScreen.js";
+import { FornecedoresScreen } from "./screens/FornecedoresScreen.js";
+import { UtilizadoresScreen } from "./screens/UtilizadoresScreen.js";
 
 function App() {
   return (
@@ -12,6 +14,8 @@ function App() {
         <Route element={<AppShell />}>
           <Route path="/" element={<FilaRevisao />} />
           <Route path="/obras" element={<ObrasScreen />} />
+          <Route path="/fornecedores" element={<FornecedoresScreen />} />
+          <Route path="/utilizadores" element={<UtilizadoresScreen />} />
         </Route>
       </Routes>
     </ApolloProvider>
