@@ -12,6 +12,7 @@ feito e a correr em produção (não só em código).
 - [x] Fila de revisão atualiza sozinha ao voltar (sem refresh manual)
 - [x] Carregar várias faturas de uma vez (upload múltiplo)
 - [x] Ícone/favicon próprio da app (plumb bob)
+- [x] Contador de faturas por rever na nav (Fila de Revisão)
 
 ## Por fazer
 
