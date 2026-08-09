@@ -1,0 +1,57 @@
+.page {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--ui-space-5);
+  height: 100%;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: var(--ui-space-3);
+}
+
+.filter {
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border-strong);
+  margin-bottom: var(--ui-space-3);
+  width: 100%;
+}
+
+.list {
+  overflow-y: auto;
+}
+
+.empty {
+  padding: var(--ui-space-5);
+  color: var(--ui-fg-muted);
+  font-size: 13px;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ui-space-3);
+}
+
+.obraGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+}
+
+.feedback {
+  color: var(--ui-success);
+  font-size: 12px;
+}
+
+.link {
+  color: var(--ui-fg);
+}

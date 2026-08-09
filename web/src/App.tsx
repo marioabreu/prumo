@@ -6,6 +6,7 @@ import { FilaRevisao } from "./FilaRevisao.js";
 import { ObrasScreen } from "./screens/ObrasScreen.js";
 import { FornecedoresScreen } from "./screens/FornecedoresScreen.js";
 import { UtilizadoresScreen } from "./screens/UtilizadoresScreen.js";
+import { DespesasScreen } from "./screens/DespesasScreen.js";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/" element={<FilaRevisao />} />
           <Route path="/obras" element={<ObrasScreen />} />
           <Route path="/fornecedores" element={<FornecedoresScreen />} />
+          <Route path="/despesas" element={<DespesasScreen />} />
           <Route path="/utilizadores" element={<UtilizadoresScreen />} />
         </Route>
       </Routes>
