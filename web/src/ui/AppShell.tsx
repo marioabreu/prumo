@@ -11,6 +11,10 @@ const NAV_ITEMS = [
   { to: "/utilizadores", label: "Utilizadores" },
 ];
 
+const DEV_NAV_ITEMS = [
+  { to: "/nova-despesa-teste", label: "+ Despesa (teste)" },
+];
+
 const ShortcutsContext = createContext<(shortcuts: ShortcutHint[]) => void>(() => {});
 
 /** Regista os atalhos de teclado do ecrã atual na barra persistente do AppShell. */
@@ -44,6 +48,20 @@ export function AppShell({ children }: { children?: ReactNode }) {
                   {item.label}
                 </NavLink>
               ))}
+            </div>
+            <div className={styles.devSection}>
+              <div className={styles.devLabel}>Desenvolvimento</div>
+              <div className={styles.nav}>
+                {DEV_NAV_ITEMS.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) => [styles.link, isActive ? styles.linkActive : ""].filter(Boolean).join(" ")}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
             </div>
           </nav>
           <main className={styles.content}>{children ?? <Outlet />}</main>

@@ -1,0 +1,37 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-5);
+  max-width: 480px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.hint {
+  color: var(--ui-fg-muted);
+  font-size: 13px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ui-space-3);
+}
+
+.warning {
+  color: var(--ui-danger);
+  font-size: 12px;
+}
+
+.feedbackOk {
+  color: var(--ui-success);
+  font-size: 13px;
+}
+
+.feedbackWarn {
+  color: var(--ui-warning);
+  font-size: 13px;
+}

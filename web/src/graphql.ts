@@ -32,6 +32,18 @@ export const FILA_REVISAO: TypedDocumentNode<{ filaRevisao: Despesa[] }> = gql`
   }
 `;
 
+export const INGERIR_FATURA: TypedDocumentNode<
+  { ingerirFatura: { duplicada: boolean; despesa: { id: string; numeroFatura: string; valorTotal: string } } },
+  { ficheiroUrl: string; qrRaw: string }
+> = gql`
+  mutation IngerirFatura($ficheiroUrl: String!, $qrRaw: String) {
+    ingerirFatura(ficheiroUrl: $ficheiroUrl, qrRaw: $qrRaw) {
+      duplicada
+      despesa { id numeroFatura valorTotal }
+    }
+  }
+`;
+
 export interface TotalObra {
   obra: { id: string; nome: string };
   total: string;

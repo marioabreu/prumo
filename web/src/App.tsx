@@ -7,6 +7,7 @@ import { ObrasScreen } from "./screens/ObrasScreen.js";
 import { FornecedoresScreen } from "./screens/FornecedoresScreen.js";
 import { UtilizadoresScreen } from "./screens/UtilizadoresScreen.js";
 import { DespesasScreen } from "./screens/DespesasScreen.js";
+import { NovaDespesaTesteScreen } from "./screens/NovaDespesaTesteScreen.js";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/fornecedores" element={<FornecedoresScreen />} />
           <Route path="/despesas" element={<DespesasScreen />} />
           <Route path="/utilizadores" element={<UtilizadoresScreen />} />
+          <Route path="/nova-despesa-teste" element={<NovaDespesaTesteScreen />} />
         </Route>
       </Routes>
     </ApolloProvider>
