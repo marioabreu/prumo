@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: prumo
       POSTGRES_DB: prumo
     ports:
-      - "5432:5432"
+      - "5433:5432" # 5432 conflicts with a native local Postgres install on this machine
     volumes:
       - prumo-db:/var/lib/postgresql/data
 volumes:

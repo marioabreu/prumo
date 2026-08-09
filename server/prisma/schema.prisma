@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EstadoDespesa {
+  POR_REVER
+  CONFIRMADA
+  ADIADA
+}
+
+enum OrigemDespesa {
+  UPLOAD
+  EMAIL
+}
+
+model Obra {
+  id       String    @id @default(cuid())
+  nome     String    @unique
+  ativa    Boolean   @default(true)
+  despesas Despesa[]
+}
+
+model Fornecedor {
+  id       String    @id @default(cuid())
+  nif      String    @unique
+  nome     String?
+  morada   String?
+  despesas Despesa[]
+}
+
+model Utilizador {
+  id    String @id @default(cuid())
+  nome  String
+  email String @unique
+}
+
+model Despesa {
+  id              String        @id @default(cuid())
+  nifFornecedor   String
+  fornecedor      Fornecedor?   @relation(fields: [fornecedorId], references: [id])
+  fornecedorId    String?
+  numeroFatura    String
+  dataFatura      String
+  baseTributavel  Decimal       @db.Decimal(12, 2)
+  valorIva        Decimal       @db.Decimal(12, 2)
+  valorTotal      Decimal       @db.Decimal(12, 2)
+  ficheiroUrl     String
+  qrRaw           String?
+  origem          OrigemDespesa @default(UPLOAD)
+  obra            Obra?         @relation(fields: [obraId], references: [id])
+  obraId          String?
+  estado          EstadoDespesa @default(POR_REVER)
+  lockPorId       String?
+  lockExpiraEm    DateTime?
+  criadaEm        DateTime      @default(now())
+  atualizadaEm    DateTime      @updatedAt
+
+  @@unique([nifFornecedor, numeroFatura, dataFatura], name: "dedupKey")
+  @@index([estado])
+}
