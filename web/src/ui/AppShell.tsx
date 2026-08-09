@@ -37,7 +37,10 @@ export function AppShell({ children }: { children?: ReactNode }) {
       <div className={styles.shell}>
         <div className={styles.body}>
           <nav className={styles.sidebar}>
-            <div className={styles.brand}>Prumo</div>
+            <div className={styles.brand}>
+              <img src="/icon.png" alt="" className={styles.brandIcon} />
+              Prumo
+            </div>
             <div className={styles.nav}>
               {NAV_ITEMS.map((item) => (
                 <NavLink
