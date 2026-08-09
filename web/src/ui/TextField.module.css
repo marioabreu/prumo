@@ -1,0 +1,20 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
+}
+
+.input {
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border-strong);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ui-fg);
+  background: var(--ui-bg-card);
+}
+
+.input:focus {
+  outline: 2px solid var(--ui-bg-selected);
+  outline-offset: -1px;
+}

@@ -1,0 +1,43 @@
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-border-strong);
+  transition: background 0.15s;
+}
+
+.track.checked {
+  background: var(--ui-success);
+}
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+
+.track.checked .thumb {
+  transform: translateX(14px);
+}
+
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}

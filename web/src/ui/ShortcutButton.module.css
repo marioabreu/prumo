@@ -1,0 +1,42 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border-strong);
+  background: var(--ui-bg-card);
+  color: var(--ui-fg);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.button:hover {
+  background: var(--ui-bg-hover);
+}
+
+.selected {
+  background: var(--ui-bg-selected);
+  color: var(--ui-fg-on-selected);
+  border-color: var(--ui-bg-selected);
+}
+
+.index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--ui-bg-hover);
+  color: var(--ui-fg-muted);
+  font-size: 11px;
+  font-family: var(--ui-font-mono);
+}
+
+.selected .index {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--ui-fg-on-selected);
+}

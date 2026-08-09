@@ -1,0 +1,19 @@
+.input {
+  width: 100%;
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border-strong);
+  background: var(--ui-bg-card);
+  font-size: 13px;
+  color: var(--ui-fg);
+}
+
+.input::placeholder {
+  color: var(--ui-fg-subtle);
+  font-family: var(--ui-font-mono);
+}
+
+.input:focus {
+  outline: 2px solid var(--ui-bg-selected);
+  outline-offset: -1px;
+}
