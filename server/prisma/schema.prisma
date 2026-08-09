@@ -42,7 +42,7 @@ model Utilizador {
 model Despesa {
   id              String        @id @default(cuid())
   nifFornecedor   String
-  fornecedor      Fornecedor?   @relation(fields: [fornecedorId], references: [id])
+  fornecedor      Fornecedor?   @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
   fornecedorId    String?
   numeroFatura    String
   dataFatura      String
@@ -52,7 +52,7 @@ model Despesa {
   ficheiroUrl     String
   qrRaw           String?
   origem          OrigemDespesa @default(UPLOAD)
-  obra            Obra?         @relation(fields: [obraId], references: [id])
+  obra            Obra?         @relation(fields: [obraId], references: [id], onDelete: Restrict)
   obraId          String?
   estado          EstadoDespesa @default(POR_REVER)
   lockPorId       String?
