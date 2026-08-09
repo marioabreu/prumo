@@ -45,7 +45,16 @@ describe("CarregarFaturaScreen", () => {
     await user.upload(screen.getByLabelText(/escolher ficheiro/i), ficheiroFalso());
 
     expect(await screen.findByText(/despesa criada/i)).toBeInTheDocument();
+    // toast mostra todos os dados lidos da fatura, não só o número
+    expect(screen.getByText("502544180")).toBeInTheDocument();
     expect(screen.getByText(/FT1/)).toBeInTheDocument();
+    expect(screen.getByText("2026-08-09")).toBeInTheDocument();
+    expect(screen.getByText("40.65 €")).toBeInTheDocument();
+    expect(screen.getByText("9.35 €")).toBeInTheDocument();
+    expect(screen.getByText("50.00 €")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /fechar/i }));
+    expect(screen.queryByText(/despesa criada/i)).not.toBeInTheDocument();
   });
 
   it("mostra erro claro quando não encontra QR legível", async () => {

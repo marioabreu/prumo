@@ -5,6 +5,8 @@ import { INGERIR_FATURA } from "../graphql.js";
 import { rasterizadorBrowser } from "../upload/rasterizadorBrowser.js";
 import { visaoIndisponivel } from "../upload/visaoIndisponivel.js";
 import { Card } from "../ui/Card.js";
+import { Toast } from "../ui/Toast.js";
+import { StatRow } from "../ui/StatRow.js";
 import styles from "./CarregarFaturaScreen.module.css";
 
 const extrairPadrao = (ficheiro: ArrayBuffer, mime: string): Promise<ResultadoExtracao> =>
@@ -14,7 +16,7 @@ type Estado =
   | { fase: "idle" }
   | { fase: "processando" }
   | { fase: "erro"; mensagem: string }
-  | { fase: "sucesso"; duplicada: boolean; numeroFatura: string; valorTotal: string };
+  | { fase: "sucesso"; duplicada: boolean; extraido: ResultadoExtracao };
 
 export function CarregarFaturaScreen({
   extrair = extrairPadrao,
@@ -39,10 +41,7 @@ export function CarregarFaturaScreen({
 
       const { data } = await ingerirFatura({ variables: { ficheiroUrl, qrRaw: extraido.qrRaw } });
       const resultado = data!.ingerirFatura;
-      setEstado({
-        fase: "sucesso", duplicada: resultado.duplicada,
-        numeroFatura: resultado.despesa.numeroFatura, valorTotal: resultado.despesa.valorTotal,
-      });
+      setEstado({ fase: "sucesso", duplicada: resultado.duplicada, extraido });
     } catch (e) {
       setEstado({ fase: "erro", mensagem: e instanceof Error ? e.message : "Erro desconhecido." });
     }
@@ -52,6 +51,10 @@ export function CarregarFaturaScreen({
     const ficheiro = e.target.files?.[0];
     if (ficheiro) void processarFicheiro(ficheiro);
     e.target.value = "";
+  }
+
+  function fecharToast() {
+    setEstado({ fase: "idle" });
   }
 
   return (
@@ -64,14 +67,30 @@ export function CarregarFaturaScreen({
         </label>
 
         {estado.fase === "processando" && <p>A ler o QR da fatura...</p>}
-        {estado.fase === "erro" && <p className={styles.erro}>{estado.mensagem}</p>}
-        {estado.fase === "sucesso" && !estado.duplicada && (
-          <p className={styles.sucesso}>Despesa criada: {estado.numeroFatura} — {estado.valorTotal} €</p>
-        )}
-        {estado.fase === "sucesso" && estado.duplicada && (
-          <p className={styles.aviso}>Esta fatura já tinha sido lida antes ({estado.numeroFatura}).</p>
-        )}
       </Card>
+
+      {estado.fase === "erro" && (
+        <Toast tone="danger" title="Não foi possível ler a fatura" onClose={fecharToast}>
+          <p className={styles.erro}>{estado.mensagem}</p>
+        </Toast>
+      )}
+
+      {estado.fase === "sucesso" && (
+        <Toast
+          tone={estado.duplicada ? "warning" : "success"}
+          title={estado.duplicada ? "Fatura já lida antes" : "Despesa criada"}
+          onClose={fecharToast}
+        >
+          <StatRow label="Fornecedor (NIF)" value={estado.extraido.nifFornecedor} />
+          <StatRow label="NIF válido" value={estado.extraido.nifValido ? "Sim" : "Não"} />
+          <StatRow label="Número" value={estado.extraido.numeroFatura} />
+          <StatRow label="Data" value={estado.extraido.dataFatura} />
+          <StatRow label="Base tributável" value={`${estado.extraido.baseTributavel} €`} />
+          <StatRow label="IVA" value={`${estado.extraido.valorIva} €`} />
+          <StatRow label="Total" value={`${estado.extraido.valorTotal} €`} emphasized />
+          <StatRow label="Origem da leitura" value={estado.extraido.fonte === "qr" ? "QR" : "Visão"} />
+        </Toast>
+      )}
     </div>
   );
 }

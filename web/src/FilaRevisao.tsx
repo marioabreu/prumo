@@ -18,7 +18,7 @@ import { useShortcutBar } from "./ui/AppShell.js";
 import styles from "./FilaRevisao.module.css";
 
 export function FilaRevisao() {
-  const { data, refetch } = useQuery(FILA_REVISAO);
+  const { data, refetch } = useQuery(FILA_REVISAO, { fetchPolicy: "cache-and-network" });
   const { data: obrasData } = useQuery(OBRAS);
   const { data: totaisData } = useQuery(TOTAIS_POR_OBRA);
   const [atribuirObra] = useMutation(ATRIBUIR_OBRA);

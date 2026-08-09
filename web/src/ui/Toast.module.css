@@ -1,0 +1,64 @@
+.toast {
+  position: fixed;
+  bottom: var(--ui-space-5);
+  right: var(--ui-space-5);
+  width: 320px;
+  max-width: calc(100vw - var(--ui-space-5) * 2);
+  z-index: 100;
+  animation: entrar 0.15s ease-out;
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  margin-bottom: var(--ui-space-2);
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.success .title {
+  color: var(--ui-success);
+}
+
+.warning .title {
+  color: var(--ui-warning);
+}
+
+.danger .title {
+  color: var(--ui-danger);
+}
+
+.close {
+  border: none;
+  background: none;
+  color: var(--ui-fg-subtle);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+}
+
+.close:hover {
+  color: var(--ui-fg);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+}
