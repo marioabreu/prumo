@@ -2,7 +2,7 @@
   "name": "@prumo/shared",
   "version": "0.0.0",
   "type": "module",
-  "main": "extraction/extrair-fatura.ts",
+  "main": "extraction/index.ts",
   "scripts": {
     "build": "tsc --noEmit",
     "test": "vitest run"

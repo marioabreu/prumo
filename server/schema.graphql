@@ -1,0 +1,70 @@
+enum EstadoDespesa { POR_REVER CONFIRMADA ADIADA }
+enum OrigemDespesa { UPLOAD EMAIL }
+
+type Obra {
+  id: ID!
+  nome: String!
+  ativa: Boolean!
+}
+
+type Fornecedor {
+  id: ID!
+  nif: String!
+  nome: String
+}
+
+type Despesa {
+  id: ID!
+  nifFornecedor: String!
+  fornecedor: Fornecedor
+  numeroFatura: String!
+  dataFatura: String!
+  baseTributavel: String!
+  valorIva: String!
+  valorTotal: String!
+  ficheiroUrl: String!
+  qrRaw: String
+  origem: OrigemDespesa!
+  obra: Obra
+  estado: EstadoDespesa!
+  lockPorId: String
+  lockExpiraEm: String
+}
+
+type SugestaoObra {
+  obraId: ID!
+  motivo: String!
+  score: Float!
+}
+
+type TotalObra {
+  obra: Obra!
+  total: String!
+}
+
+type IngerirFaturaResultado {
+  despesa: Despesa!
+  duplicada: Boolean!
+}
+
+input AtualizarValoresInput {
+  baseTributavel: String
+  valorIva: String
+  valorTotal: String
+}
+
+type Query {
+  filaRevisao(estado: EstadoDespesa): [Despesa!]!
+  sugestaoObra(despesaId: ID!): SugestaoObra
+  totaisPorObra: [TotalObra!]!
+  obras: [Obra!]!
+}
+
+type Mutation {
+  ingerirFatura(ficheiroUrl: String!, qrRaw: String): IngerirFaturaResultado!
+  bloquear(despesaId: ID!, utilizadorId: ID!): Despesa!
+  atribuirObra(despesaId: ID!, obraId: ID!): Despesa!
+  atualizarValores(despesaId: ID!, input: AtualizarValoresInput!): Despesa!
+  confirmar(despesaId: ID!): Despesa!
+  adiar(despesaId: ID!): Despesa!
+}

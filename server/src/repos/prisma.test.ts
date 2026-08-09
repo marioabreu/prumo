@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { PrismaClient } from "@prisma/client";
 import { criarReposPrisma } from "./prisma.js";
+import { qrParaDespesa } from "@prumo/shared";
 
 const prisma = new PrismaClient();
 
@@ -44,5 +45,18 @@ describe("criarReposPrisma — totaisPorObra em SQL", () => {
 
     const totais = await repos.despesas.totaisPorObra();
     expect(totais).toEqual([{ obraId: obra.id, total: "12.30" }]);
+  });
+
+  it("aceita diretamente o shape de qrParaDespesa sem o campo extra nifValido", async () => {
+    const qrRaw =
+      "A:502544180*D:FT*F:20260809*G:FT 901*I7:21.09*I8:4.86*O:25.95";
+    const { nifValido, ...dados } = qrParaDespesa(qrRaw);
+    const repos = criarReposPrisma(prisma);
+    // Deve rebentar em tempo de teste (Prisma valida estritamente o shape) se
+    // qrParaDespesa alguma vez devolver um campo que CriarDespesaInput não aceite.
+    await expect(
+      repos.despesas.criar({ ...dados, ficheiroUrl: "https://exemplo/f3.pdf", qrRaw, origem: "UPLOAD" })
+    ).resolves.toMatchObject({ nifFornecedor: "502544180" });
+    expect(nifValido).toBe(true);
   });
 });
