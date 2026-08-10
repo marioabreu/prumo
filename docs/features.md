@@ -15,6 +15,7 @@ feito e a correr em produção (não só em código).
 - [x] Contador de faturas por rever na nav (Fila de Revisão)
 - [x] Nome/morada do fornecedor via VIES (com fallback nif.pt) + edição manual
 - [x] Lista de tarefas/sugestões na app (nova secção na nav)
+- [x] Feature flags — ecrã Definições para ligar/desligar features em desenvolvimento
 
 ## Por fazer
 
@@ -32,6 +33,10 @@ feito e a correr em produção (não só em código).
 ## Ideias por confirmar
 
 _(sugestões soltas, ainda sem "sim, quero isto")_
+
+- [ ] Tema visual a partir de uma referência do Figma, selecionável em
+      Definições — parado à espera de tokens/screenshots do design (não
+      consigo abrir o link do Figma diretamente)
 
 ---
 
