@@ -14,6 +14,7 @@ feito e a correr em produção (não só em código).
 - [x] Ícone/favicon próprio da app (plumb bob)
 - [x] Contador de faturas por rever na nav (Fila de Revisão)
 - [x] Nome/morada do fornecedor via VIES (com fallback nif.pt) + edição manual
+- [x] Lista de tarefas/sugestões na app (nova secção na nav)
 
 ## Por fazer
 
