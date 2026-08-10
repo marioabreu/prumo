@@ -189,3 +189,32 @@ describe("CRUD de Utilizador", () => {
     expect(await resolvers.Mutation.eliminarUtilizador({}, { id: u.id }, ctx)).toBe(true);
   });
 });
+
+describe("CRUD de Tarefa", () => {
+  it("criarTarefa começa por feita:false, atualizarTarefa marca como feita", async () => {
+    const ctx = ctxDeTeste();
+    const tarefa = await resolvers.Mutation.criarTarefa({}, { input: { texto: "Adicionar export CSV" } }, ctx);
+    expect(tarefa.feita).toBe(false);
+
+    const feita = await resolvers.Mutation.atualizarTarefa({}, { id: tarefa.id, input: { feita: true } }, ctx);
+    expect(feita.feita).toBe(true);
+    expect(feita.texto).toBe("Adicionar export CSV");
+  });
+
+  it("eliminarTarefa remove uma tarefa; eliminarTarefasFeitas remove só as concluídas", async () => {
+    const ctx = ctxDeTeste();
+    const a = await resolvers.Mutation.criarTarefa({}, { input: { texto: "A" } }, ctx);
+    const b = await resolvers.Mutation.criarTarefa({}, { input: { texto: "B" } }, ctx);
+    const c = await resolvers.Mutation.criarTarefa({}, { input: { texto: "C" } }, ctx);
+    await resolvers.Mutation.atualizarTarefa({}, { id: b.id, input: { feita: true } }, ctx);
+    await resolvers.Mutation.atualizarTarefa({}, { id: c.id, input: { feita: true } }, ctx);
+
+    expect(await resolvers.Mutation.eliminarTarefa({}, { id: a.id }, ctx)).toBe(true);
+
+    const removidas = await resolvers.Mutation.eliminarTarefasFeitas({}, {}, ctx);
+    expect(removidas).toBe(2);
+
+    const restantes = await resolvers.Query.tarefas({}, {}, ctx);
+    expect(restantes).toHaveLength(0);
+  });
+});

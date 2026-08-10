@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
 import type {
-  Repos, Obra, Fornecedor, Utilizador, Despesa, CriarDespesaInput,
+  Repos, Obra, Fornecedor, Utilizador, Tarefa, Despesa, CriarDespesaInput,
   AtualizarValoresInput, TotalObra, DespesasFiltro,
   CriarObraInput, AtualizarObraInput,
   CriarFornecedorInput, AtualizarFornecedorInput,
   CriarUtilizadorInput, AtualizarUtilizadorInput,
+  CriarTarefaInput, AtualizarTarefaInput,
 } from "./types.js";
 import { lockAtivoDeOutro, LOCK_TTL_MS, ERRO_OBRA_EM_USO, ERRO_FORNECEDOR_EM_USO } from "./types.js";
 
@@ -13,6 +14,7 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
   const obras = new Map<string, Obra>();
   const fornecedores = new Map<string, Fornecedor>();
   const utilizadores = new Map<string, Utilizador>();
+  const tarefas = new Map<string, Tarefa>();
   const despesas = new Map<string, Despesa>();
 
   for (const o of seedObras) {
@@ -142,6 +144,32 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
       async eliminar(id) {
         if (!utilizadores.has(id)) throw new Error(`Utilizador ${id} não encontrado`);
         utilizadores.delete(id);
+      },
+    },
+    tarefas: {
+      async listar() {
+        return [...tarefas.values()].sort((a, b) => b.criadaEm.getTime() - a.criadaEm.getTime());
+      },
+      async criar(input: CriarTarefaInput) {
+        const id = randomUUID();
+        const t: Tarefa = { id, texto: input.texto, feita: false, criadaEm: new Date() };
+        tarefas.set(id, t);
+        return t;
+      },
+      async atualizar(id, patch: AtualizarTarefaInput) {
+        const t = tarefas.get(id);
+        if (!t) throw new Error(`Tarefa ${id} não encontrada`);
+        Object.assign(t, patch);
+        return t;
+      },
+      async eliminar(id) {
+        if (!tarefas.has(id)) throw new Error(`Tarefa ${id} não encontrada`);
+        tarefas.delete(id);
+      },
+      async eliminarFeitas() {
+        const feitas = [...tarefas.values()].filter((t) => t.feita);
+        for (const t of feitas) tarefas.delete(t.id);
+        return feitas.length;
       },
     },
     despesas: {

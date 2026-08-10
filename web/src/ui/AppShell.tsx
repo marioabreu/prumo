@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: "/fornecedores", label: "Fornecedores" },
   { to: "/despesas", label: "Despesas" },
   { to: "/utilizadores", label: "Utilizadores" },
+  { to: "/tarefas", label: "Tarefas" },
 ];
 
 const DEV_NAV_ITEMS = [

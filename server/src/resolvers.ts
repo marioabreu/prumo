@@ -5,6 +5,7 @@ import type {
   EstadoDespesa, CriarObraInput, AtualizarObraInput,
   CriarFornecedorInput, AtualizarFornecedorInput,
   CriarUtilizadorInput, AtualizarUtilizadorInput,
+  CriarTarefaInput, AtualizarTarefaInput,
 } from "./repos/types.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -48,6 +49,7 @@ export const resolvers = {
     obras: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.obras.listar(),
     fornecedores: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.fornecedores.listar(),
     utilizadores: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.utilizadores.listar(),
+    tarefas: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.tarefas.listar(),
   },
 
   Mutation: {
@@ -131,6 +133,21 @@ export const resolvers = {
       await ctx.repos.utilizadores.eliminar(args.id);
       return true;
     },
+
+    criarTarefa: (_: unknown, args: { input: CriarTarefaInput }, ctx: GraphQLContext) =>
+      ctx.repos.tarefas.criar(args.input),
+
+    atualizarTarefa: (
+      _: unknown, args: { id: string; input: AtualizarTarefaInput }, ctx: GraphQLContext
+    ) => ctx.repos.tarefas.atualizar(args.id, args.input),
+
+    eliminarTarefa: async (_: unknown, args: { id: string }, ctx: GraphQLContext) => {
+      await ctx.repos.tarefas.eliminar(args.id);
+      return true;
+    },
+
+    eliminarTarefasFeitas: (_: unknown, __: unknown, ctx: GraphQLContext) =>
+      ctx.repos.tarefas.eliminarFeitas(),
   },
 
   Despesa: {

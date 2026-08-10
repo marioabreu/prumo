@@ -5,6 +5,7 @@ import type {
   CriarObraInput, AtualizarObraInput,
   CriarFornecedorInput, AtualizarFornecedorInput,
   CriarUtilizadorInput, AtualizarUtilizadorInput,
+  CriarTarefaInput, AtualizarTarefaInput,
 } from "./types.js";
 import { lockAtivoDeOutro, LOCK_TTL_MS, ERRO_OBRA_EM_USO, ERRO_FORNECEDOR_EM_USO } from "./types.js";
 
@@ -96,6 +97,22 @@ export function criarReposPrisma(prisma: PrismaClient): Repos {
       },
       async eliminar(id) {
         await prisma.utilizador.delete({ where: { id } });
+      },
+    },
+    tarefas: {
+      async listar() { return prisma.tarefa.findMany({ orderBy: { criadaEm: "desc" } }); },
+      async criar(input: CriarTarefaInput) {
+        return prisma.tarefa.create({ data: { texto: input.texto } });
+      },
+      async atualizar(id, patch: AtualizarTarefaInput) {
+        return prisma.tarefa.update({ where: { id }, data: patch });
+      },
+      async eliminar(id) {
+        await prisma.tarefa.delete({ where: { id } });
+      },
+      async eliminarFeitas() {
+        const { count } = await prisma.tarefa.deleteMany({ where: { feita: true } });
+        return count;
       },
     },
     despesas: {

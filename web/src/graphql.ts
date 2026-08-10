@@ -291,3 +291,53 @@ export const ELIMINAR_UTILIZADOR: TypedDocumentNode<
     eliminarUtilizador(id: $id)
   }
 `;
+
+export interface Tarefa {
+  id: string;
+  texto: string;
+  feita: boolean;
+  criadaEm: string;
+}
+
+export const TAREFAS: TypedDocumentNode<{ tarefas: Tarefa[] }> = gql`
+  query Tarefas { tarefas { id texto feita criadaEm } }
+`;
+
+export interface CriarTarefaInput {
+  texto: string;
+}
+
+export interface AtualizarTarefaInput {
+  texto?: string;
+  feita?: boolean;
+}
+
+export const CRIAR_TAREFA: TypedDocumentNode<
+  { criarTarefa: Tarefa }, { input: CriarTarefaInput }
+> = gql`
+  mutation CriarTarefa($input: CriarTarefaInput!) {
+    criarTarefa(input: $input) { id texto feita criadaEm }
+  }
+`;
+
+export const ATUALIZAR_TAREFA: TypedDocumentNode<
+  { atualizarTarefa: Tarefa }, { id: string; input: AtualizarTarefaInput }
+> = gql`
+  mutation AtualizarTarefa($id: ID!, $input: AtualizarTarefaInput!) {
+    atualizarTarefa(id: $id, input: $input) { id texto feita criadaEm }
+  }
+`;
+
+export const ELIMINAR_TAREFA: TypedDocumentNode<
+  { eliminarTarefa: boolean }, { id: string }
+> = gql`
+  mutation EliminarTarefa($id: ID!) {
+    eliminarTarefa(id: $id)
+  }
+`;
+
+export const ELIMINAR_TAREFAS_FEITAS: TypedDocumentNode<{ eliminarTarefasFeitas: number }> = gql`
+  mutation EliminarTarefasFeitas {
+    eliminarTarefasFeitas
+  }
+`;

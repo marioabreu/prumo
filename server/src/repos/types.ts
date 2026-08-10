@@ -19,6 +19,13 @@ export interface Utilizador {
   email: string;
 }
 
+export interface Tarefa {
+  id: string;
+  texto: string;
+  feita: boolean;
+  criadaEm: Date;
+}
+
 export interface Despesa {
   id: string;
   nifFornecedor: string;
@@ -94,6 +101,15 @@ export interface AtualizarUtilizadorInput {
   email?: string;
 }
 
+export interface CriarTarefaInput {
+  texto: string;
+}
+
+export interface AtualizarTarefaInput {
+  texto?: string;
+  feita?: boolean;
+}
+
 export interface TotalObra {
   obraId: string;
   total: string;
@@ -133,6 +149,13 @@ export interface Repos {
     criar(input: CriarUtilizadorInput): Promise<Utilizador>;
     atualizar(id: string, patch: AtualizarUtilizadorInput): Promise<Utilizador>;
     eliminar(id: string): Promise<void>;
+  };
+  tarefas: {
+    listar(): Promise<Tarefa[]>;
+    criar(input: CriarTarefaInput): Promise<Tarefa>;
+    atualizar(id: string, patch: AtualizarTarefaInput): Promise<Tarefa>;
+    eliminar(id: string): Promise<void>;
+    eliminarFeitas(): Promise<number>;
   };
   despesas: {
     obterPorChaveDedup(

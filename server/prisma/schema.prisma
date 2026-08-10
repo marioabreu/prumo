@@ -39,6 +39,13 @@ model Utilizador {
   email String @unique
 }
 
+model Tarefa {
+  id        String   @id @default(cuid())
+  texto     String
+  feita     Boolean  @default(false)
+  criadaEm  DateTime @default(now())
+}
+
 model Despesa {
   id              String        @id @default(cuid())
   nifFornecedor   String

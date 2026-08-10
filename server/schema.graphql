@@ -20,6 +20,13 @@ type Utilizador {
   email: String!
 }
 
+type Tarefa {
+  id: ID!
+  texto: String!
+  feita: Boolean!
+  criadaEm: String!
+}
+
 type Despesa {
   id: ID!
   nifFornecedor: String!
@@ -92,6 +99,15 @@ input AtualizarUtilizadorInput {
   email: String
 }
 
+input CriarTarefaInput {
+  texto: String!
+}
+
+input AtualizarTarefaInput {
+  texto: String
+  feita: Boolean
+}
+
 type Query {
   filaRevisao(estado: EstadoDespesa): [Despesa!]!
   despesas(estado: EstadoDespesa, obraId: ID): [Despesa!]!
@@ -101,6 +117,7 @@ type Query {
   obras: [Obra!]!
   fornecedores: [Fornecedor!]!
   utilizadores: [Utilizador!]!
+  tarefas: [Tarefa!]!
 }
 
 type Mutation {
@@ -122,4 +139,9 @@ type Mutation {
   criarUtilizador(input: CriarUtilizadorInput!): Utilizador!
   atualizarUtilizador(id: ID!, input: AtualizarUtilizadorInput!): Utilizador!
   eliminarUtilizador(id: ID!): Boolean!
+
+  criarTarefa(input: CriarTarefaInput!): Tarefa!
+  atualizarTarefa(id: ID!, input: AtualizarTarefaInput!): Tarefa!
+  eliminarTarefa(id: ID!): Boolean!
+  eliminarTarefasFeitas: Int!
 }
