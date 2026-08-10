@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type {
-  Repos, Obra, Fornecedor, Utilizador, Tarefa, Despesa, CriarDespesaInput,
+  Repos, Obra, Fornecedor, Utilizador, Tarefa, Funcionalidade, Despesa, CriarDespesaInput,
   AtualizarValoresInput, TotalObra, DespesasFiltro,
   CriarObraInput, AtualizarObraInput,
   CriarFornecedorInput, AtualizarFornecedorInput,
@@ -15,6 +15,7 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
   const fornecedores = new Map<string, Fornecedor>();
   const utilizadores = new Map<string, Utilizador>();
   const tarefas = new Map<string, Tarefa>();
+  const funcionalidades = new Map<string, Funcionalidade>();
   const despesas = new Map<string, Despesa>();
 
   for (const o of seedObras) {
@@ -170,6 +171,26 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
         const feitas = [...tarefas.values()].filter((t) => t.feita);
         for (const t of feitas) tarefas.delete(t.id);
         return feitas.length;
+      },
+    },
+    funcionalidades: {
+      async listar() { return [...funcionalidades.values()]; },
+      async definir(chave, nome) {
+        const existente = [...funcionalidades.values()].find((f) => f.chave === chave);
+        if (existente) {
+          existente.nome = nome;
+          return existente;
+        }
+        const id = randomUUID();
+        const f: Funcionalidade = { id, chave, nome, ativa: false };
+        funcionalidades.set(id, f);
+        return f;
+      },
+      async atualizar(chave, ativa) {
+        const f = [...funcionalidades.values()].find((x) => x.chave === chave);
+        if (!f) throw new Error(`Funcionalidade "${chave}" não encontrada`);
+        f.ativa = ativa;
+        return f;
       },
     },
     despesas: {

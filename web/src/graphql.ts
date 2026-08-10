@@ -341,3 +341,22 @@ export const ELIMINAR_TAREFAS_FEITAS: TypedDocumentNode<{ eliminarTarefasFeitas:
     eliminarTarefasFeitas
   }
 `;
+
+export interface Funcionalidade {
+  id: string;
+  chave: string;
+  nome: string;
+  ativa: boolean;
+}
+
+export const FUNCIONALIDADES: TypedDocumentNode<{ funcionalidades: Funcionalidade[] }> = gql`
+  query Funcionalidades { funcionalidades { id chave nome ativa } }
+`;
+
+export const ATUALIZAR_FUNCIONALIDADE: TypedDocumentNode<
+  { atualizarFuncionalidade: Funcionalidade }, { chave: string; ativa: boolean }
+> = gql`
+  mutation AtualizarFuncionalidade($chave: String!, $ativa: Boolean!) {
+    atualizarFuncionalidade(chave: $chave, ativa: $ativa) { id chave nome ativa }
+  }
+`;

@@ -46,6 +46,15 @@ model Tarefa {
   criadaEm  DateTime @default(now())
 }
 
+// Feature flags: a chave é definida em código (server/src/funcionalidades/registo.ts)
+// e semeada no arranque; "ativa" é o único campo que a UI de Definições altera.
+model Funcionalidade {
+  id    String  @id @default(cuid())
+  chave String  @unique
+  nome  String
+  ativa Boolean @default(false)
+}
+
 model Despesa {
   id              String        @id @default(cuid())
   nifFornecedor   String

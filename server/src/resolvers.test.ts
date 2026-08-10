@@ -218,3 +218,29 @@ describe("CRUD de Tarefa", () => {
     expect(restantes).toHaveLength(0);
   });
 });
+
+describe("Funcionalidades (feature flags)", () => {
+  it("definir cria com ativa:false e é idempotente (não reseta ativa numa segunda chamada)", async () => {
+    const ctx = ctxDeTeste();
+    const criada = await ctx.repos.funcionalidades.definir("nova-ui", "Nova UI");
+    expect(criada.ativa).toBe(false);
+
+    await resolvers.Mutation.atualizarFuncionalidade({}, { chave: "nova-ui", ativa: true }, ctx);
+
+    const reafirmada = await ctx.repos.funcionalidades.definir("nova-ui", "Nova UI (renomeada)");
+    expect(reafirmada.ativa).toBe(true);
+    expect(reafirmada.nome).toBe("Nova UI (renomeada)");
+  });
+
+  it("atualizarFuncionalidade liga/desliga uma feature existente", async () => {
+    const ctx = ctxDeTeste();
+    await ctx.repos.funcionalidades.definir("beta-x", "Beta X");
+
+    const ligada = await resolvers.Mutation.atualizarFuncionalidade({}, { chave: "beta-x", ativa: true }, ctx);
+    expect(ligada.ativa).toBe(true);
+
+    const lista = await resolvers.Query.funcionalidades({}, {}, ctx);
+    expect(lista).toHaveLength(1);
+    expect(lista[0].ativa).toBe(true);
+  });
+});

@@ -27,6 +27,13 @@ type Tarefa {
   criadaEm: String!
 }
 
+type Funcionalidade {
+  id: ID!
+  chave: String!
+  nome: String!
+  ativa: Boolean!
+}
+
 type Despesa {
   id: ID!
   nifFornecedor: String!
@@ -118,6 +125,7 @@ type Query {
   fornecedores: [Fornecedor!]!
   utilizadores: [Utilizador!]!
   tarefas: [Tarefa!]!
+  funcionalidades: [Funcionalidade!]!
 }
 
 type Mutation {
@@ -144,4 +152,6 @@ type Mutation {
   atualizarTarefa(id: ID!, input: AtualizarTarefaInput!): Tarefa!
   eliminarTarefa(id: ID!): Boolean!
   eliminarTarefasFeitas: Int!
+
+  atualizarFuncionalidade(chave: String!, ativa: Boolean!): Funcionalidade!
 }

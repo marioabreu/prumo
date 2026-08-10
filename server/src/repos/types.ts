@@ -26,6 +26,13 @@ export interface Tarefa {
   criadaEm: Date;
 }
 
+export interface Funcionalidade {
+  id: string;
+  chave: string;
+  nome: string;
+  ativa: boolean;
+}
+
 export interface Despesa {
   id: string;
   nifFornecedor: string;
@@ -156,6 +163,14 @@ export interface Repos {
     atualizar(id: string, patch: AtualizarTarefaInput): Promise<Tarefa>;
     eliminar(id: string): Promise<void>;
     eliminarFeitas(): Promise<number>;
+  };
+  funcionalidades: {
+    listar(): Promise<Funcionalidade[]>;
+    // Idempotente: cria com ativa:false se a chave ainda não existir; nunca
+    // toca em "ativa" numa chave já existente (o registo de código pode
+    // mudar o "nome" ao longo do tempo, mas não deve apagar a escolha do utilizador).
+    definir(chave: string, nome: string): Promise<Funcionalidade>;
+    atualizar(chave: string, ativa: boolean): Promise<Funcionalidade>;
   };
   despesas: {
     obterPorChaveDedup(

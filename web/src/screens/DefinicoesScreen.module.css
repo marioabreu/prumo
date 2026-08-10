@@ -1,0 +1,32 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-5);
+  max-width: 640px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-fg-muted);
+  margin-bottom: var(--ui-space-3);
+}
+
+.row {
+  padding: var(--ui-space-3);
+}
+
+.row + .row {
+  border-top: 1px solid var(--ui-border);
+}
+
+.empty {
+  padding: var(--ui-space-5);
+  color: var(--ui-fg-muted);
+  font-size: 13px;
+}

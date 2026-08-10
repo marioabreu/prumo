@@ -50,6 +50,7 @@ export const resolvers = {
     fornecedores: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.fornecedores.listar(),
     utilizadores: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.utilizadores.listar(),
     tarefas: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.tarefas.listar(),
+    funcionalidades: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.funcionalidades.listar(),
   },
 
   Mutation: {
@@ -148,6 +149,10 @@ export const resolvers = {
 
     eliminarTarefasFeitas: (_: unknown, __: unknown, ctx: GraphQLContext) =>
       ctx.repos.tarefas.eliminarFeitas(),
+
+    atualizarFuncionalidade: (
+      _: unknown, args: { chave: string; ativa: boolean }, ctx: GraphQLContext
+    ) => ctx.repos.funcionalidades.atualizar(args.chave, args.ativa),
   },
 
   Despesa: {

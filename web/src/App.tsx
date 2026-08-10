@@ -9,6 +9,7 @@ import { FornecedoresScreen } from "./screens/FornecedoresScreen.js";
 import { UtilizadoresScreen } from "./screens/UtilizadoresScreen.js";
 import { DespesasScreen } from "./screens/DespesasScreen.js";
 import { TarefasScreen } from "./screens/TarefasScreen.js";
+import { DefinicoesScreen } from "./screens/DefinicoesScreen.js";
 import { NovaDespesaTesteScreen } from "./screens/NovaDespesaTesteScreen.js";
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
           <Route path="/despesas" element={<DespesasScreen />} />
           <Route path="/utilizadores" element={<UtilizadoresScreen />} />
           <Route path="/tarefas" element={<TarefasScreen />} />
+          <Route path="/definicoes" element={<DefinicoesScreen />} />
           <Route path="/nova-despesa-teste" element={<NovaDespesaTesteScreen />} />
         </Route>
       </Routes>

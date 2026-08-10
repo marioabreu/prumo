@@ -115,6 +115,19 @@ export function criarReposPrisma(prisma: PrismaClient): Repos {
         return count;
       },
     },
+    funcionalidades: {
+      async listar() { return prisma.funcionalidade.findMany(); },
+      async definir(chave, nome) {
+        return prisma.funcionalidade.upsert({
+          where: { chave },
+          update: { nome },
+          create: { chave, nome, ativa: false },
+        });
+      },
+      async atualizar(chave, ativa) {
+        return prisma.funcionalidade.update({ where: { chave }, data: { ativa } });
+      },
+    },
     despesas: {
       async obterPorChaveDedup(nifFornecedor, numeroFatura, dataFatura) {
         const row = await prisma.despesa.findUnique({

@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: "/despesas", label: "Despesas" },
   { to: "/utilizadores", label: "Utilizadores" },
   { to: "/tarefas", label: "Tarefas" },
+  { to: "/definicoes", label: "Definições" },
 ];
 
 const DEV_NAV_ITEMS = [
