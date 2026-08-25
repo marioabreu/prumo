@@ -16,6 +16,8 @@ feito e a correr em produção (não só em código).
 - [x] Nome/morada do fornecedor via VIES (com fallback nif.pt) + edição manual
 - [x] Lista de tarefas/sugestões na app (nova secção na nav)
 - [x] Feature flags — ecrã Definições para ligar/desligar features em desenvolvimento
+- [x] Entidade Obra generalizada para CentroCusto (CLAUDE.md #10), com rótulo
+      singular/plural configurável em Definições (por defeito "Obra"/"Obras")
 
 ## Por fazer
 

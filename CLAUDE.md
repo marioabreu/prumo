@@ -1,8 +1,8 @@
 # MVP — Despesas por obra
 
-> Contexto do projeto para o Claude Code. Estado atual: **temos protótipos e
-> módulos de referência; falta montá-los num projeto real e a correr.**
-> Este ficheiro é a fonte de verdade das decisões — lê-o antes de mexer.
+> Contexto do projeto para o Claude Code. Este ficheiro é a fonte de verdade
+> das decisões de design — lê-o antes de mexer. Para o estado atual do
+> desenvolvimento (o que já está feito, o que falta), ver `docs/features.md`.
 
 ---
 
@@ -26,45 +26,7 @@ Camadas de confiança:
 - **PDF/foto + QR** → dados fiscais garantidos, só falta a obra. Revisão de segundos.
 - **Sem QR legível** → fallback para modelo de visão, revisão completa dos valores.
 
-## 3. Estado atual — ficheiros que já existem
-
-Estes são protótipos/referência a integrar (caminhos-alvo sugeridos):
-
-| Ficheiro atual | Papel | Caminho-alvo |
-|---|---|---|
-| `qr-fatura.ts` | Descodifica a string do QR (Portaria 195/2020) → objeto tipado; valida NIF; mapeia para `despesas` | `shared/extraction/qr-fatura.ts` |
-| `extrair-fatura.ts` | PDF/imagem → rasteriza → lê QR (jsqr); QR-first com fallback de visão; adaptadores browser/Node | `shared/extraction/extrair-fatura.ts` |
-| `sugerir-obra.ts` | Heurística explicável da obra provável (histórico do fornecedor ponderado por recência + boost de obra ativa + morada) | `server/sugestao/sugerir-obra.ts` |
-| `schema.graphql` | Schema GraphQL (obras, fornecedores, despesas, fila, totais, sugestão, subscriptions) | `server/schema.graphql` |
-| `resolvers.ts` | Resolvers + portas `Repos` (DB-agnóstico) + impl. em memória para testes | `server/resolvers.ts` |
-| `fila-revisao-preview.jsx` | Protótipo da fila de revisão keyboard-first, com sugestão a pré-preencher | `web/src/FilaRevisao.tsx` (a portar p/ TS) |
-
-## 4. Stack
-
-- **Linguagem:** TypeScript em todo o lado.
-- **API:** GraphQL com Apollo Server.
-- **Frontend:** React + Apollo Client. **Mobile-first / PWA** — a captura da foto
-  acontece no telemóvel.
-- **Dados:** Postgres via **Prisma** (implementa as portas `Repos`).
-- **Ficheiros:** object storage S3-compatível (R2/S3/Supabase Storage) para as imagens/PDFs originais.
-- **Extração:** `jsqr` + `pdfjs-dist` para o QR; modelo de visão (Claude/GPT-4o) como fallback.
-
-## 5. Estrutura de repo sugerida
-
-```
-/
-├─ CLAUDE.md              ← este ficheiro
-├─ shared/extraction/     ← usado pelo web (upload) e pelo server (email)
-├─ server/                ← Apollo + Prisma + resolvers + sugestão
-│  ├─ schema.graphql
-│  ├─ resolvers.ts
-│  ├─ repos/              ← impl. Prisma das portas Repos
-│  └─ sugestao/
-├─ web/                   ← React + Apollo Client
-└─ prisma/schema.prisma
-```
-
-## 6. Decisões de design — NÃO reverter sem uma boa razão
+## 3. Decisões de design — NÃO reverter sem uma boa razão
 
 1. **Dinheiro é `Decimal`/`NUMERIC`, nunca `Float`.** É uma app de somar cêntimos;
    floats dão erros de arredondamento que destroem a confiança no total. Somatórios
@@ -91,8 +53,15 @@ Estes são protótipos/referência a integrar (caminhos-alvo sugeridos):
    preenchida, e o revisor só carimba a obra.
 9. **Human-in-the-loop de propósito.** A sugestão pré-preenche mas o `motivo` fica
    sempre visível — o objetivo é acelerar, não substituir o julgamento.
+10. **A entidade "obra" é genérica no código (`CentroCusto`), com rótulo
+    configurável na UI.** O nome interno já não está preso a este cliente —
+    outro cliente noutro setor pode chamar-lhe "Projeto" ou "Departamento".
+    Por defeito a app continua a mostrar "Obra"/"Obras" (o vocabulário deste
+    cliente, guardado em `Configuracao`); o ecrã Definições troca o rótulo
+    singular/plural sem deploy. As decisões #5, #6, #8 e #9 acima e a secção 1
+    continuam válidas lendo "obra" como o rótulo por defeito de `CentroCusto`.
 
-## 7. Como as camadas ligam
+## 4. Como as camadas ligam
 
 ```
 extração (QR/visão)  →  schema  →  resolvers (portas Repos)  →  UI React
@@ -102,10 +71,8 @@ extração (QR/visão)  →  schema  →  resolvers (portas Repos)  →  UI Reac
   com Prisma em `server/repos/`. Cada método vira 1–2 linhas de Prisma.
 - A porta **`ctx.extrair(ficheiroUrl)`** é onde entra o pipeline de
   `extrair-fatura.ts`.
-- Os **field resolvers precisam de DataLoader** (por request) — como estão fazem
-  N+1 (um query de fornecedor por despesa).
 
-## 8. Domínio PT — coisas não óbvias
+## 5. Domínio PT — coisas não óbvias
 
 - **QR de faturas certificadas (Portaria 195/2020):** string de pares `Chave:Valor`
   separados por `*`; campos a zero são omitidos. O dicionário de campos completo
@@ -118,32 +85,19 @@ extração (QR/visão)  →  schema  →  resolvers (portas Repos)  →  UI Reac
 - **Nem todos os PDFs têm QR** (recibos manuais, digitalizações) → o fallback de
   visão continua a existir, mas passa a exceção.
 
-## 9. Backlog ordenado (por dependência)
-
-1. **Scaffold:** Node + TS + Apollo Server + Prisma + Vite/React. Repo a compilar e a arrancar vazio.
-2. **Prisma schema** a partir de `schema.graphql` (Obra, Fornecedor, Despesa, Utilizador) — incluir a **constraint única de dedup** e um índice para a fila.
-3. **Implementar `Repos` com Prisma** (substituir `criarReposMemoria`). Somatórios em SQL.
-4. **Ligar `ctx.extrair`** ao `extrair-fatura.ts` (decode QR server-side p/ email; client-side p/ upload).
-5. **DataLoader** nos field resolvers (`Despesa.fornecedor/obra/...`).
-6. **Portar a UI** `fila-revisao-preview.jsx` → `FilaRevisao.tsx` e ligá-la aos resolvers via Apollo Client (queries `filaRevisao`, `sugestaoObra`, `totaisPorObra`; mutations `bloquear`/`atribuir`/`atualizarValores`/`confirmar`/`adiar`).
-7. **Subscriptions** para a fila atualizar em tempo real entre os dois revisores.
-8. **Upload + storage** dos ficheiros originais (S3/R2) e captura mobile.
-9. **Export CSV/Excel** dos confirmados.
-10. **Testes:** heurística de sugestão, dedup, expiração de lock.
-
-## 10. Fora de scope no MVP (fase 2)
+## 6. Fora de scope no MVP (fase 2)
 
 Obras como entidade rica (orçamento vs. real), categorias, linhas de fatura por
 taxa de IVA, papéis/multi-utilizador, ATCUD/validação fiscal profunda, SAF-T,
 integração com contabilidade, e substituir a heurística por um modelo aprendido
 (cada confirmação é, na prática, um dado de treino `fornecedor+fatura → obra`).
 
-## 11. Riscos conhecidos
+## 7. Riscos conhecidos
 
 - **Arranque a frio da sugestão:** sem histórico confirmado, quase nada terá
   sugestão nas primeiras semanas. O valor imediato é a extração; a sugestão
   melhora com o uso. Gerir esta expectativa com o cliente.
 - **pdf.js em Node é fiddly** (globais de canvas). Preferir decode do QR no browser
   (upload) e usar o adaptador Node só para o pipeline de email.
-- **Não montar a UI sobre dados a fingir** para além do protótipo — a partir do
-  passo 6 do backlog, tudo contra resolvers reais.
+- **Não montar a UI sobre dados a fingir** — desenvolver sempre contra resolvers
+  reais, nunca sobre mocks deixados na UI.
