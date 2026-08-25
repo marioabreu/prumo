@@ -18,7 +18,7 @@ enum OrigemDespesa {
   EMAIL
 }
 
-model Obra {
+model CentroCusto {
   id       String    @id @default(cuid())
   nome     String    @unique
   ativa    Boolean   @default(true)
@@ -55,6 +55,14 @@ model Funcionalidade {
   ativa Boolean @default(false)
 }
 
+// Configuração livre chave/valor (ex.: rótulos de UI configuráveis). Mesmo
+// padrão da Funcionalidade: chave definida em código, semeada no arranque.
+model Configuracao {
+  id    String @id @default(cuid())
+  chave String @unique
+  valor String
+}
+
 model Despesa {
   id              String        @id @default(cuid())
   nifFornecedor   String
@@ -68,8 +76,8 @@ model Despesa {
   ficheiroUrl     String
   qrRaw           String?
   origem          OrigemDespesa @default(UPLOAD)
-  obra            Obra?         @relation(fields: [obraId], references: [id], onDelete: Restrict)
-  obraId          String?
+  centroCusto     CentroCusto?  @relation(fields: [centroCustoId], references: [id], onDelete: Restrict)
+  centroCustoId   String?
   estado          EstadoDespesa @default(POR_REVER)
   lockPorId       String?
   lockExpiraEm    DateTime?
@@ -78,4 +86,7 @@ model Despesa {
 
   @@unique([nifFornecedor, numeroFatura, dataFatura], name: "dedupKey")
   @@index([estado])
+  @@index([centroCustoId])
+  @@index([fornecedorId])
+  @@index([nifFornecedor, criadaEm])
 }

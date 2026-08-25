@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 beforeEach(async () => {
   await prisma.despesa.deleteMany();
   await prisma.fornecedor.deleteMany();
-  await prisma.obra.deleteMany();
+  await prisma.centroCusto.deleteMany();
   await prisma.utilizador.deleteMany();
 });
 
@@ -32,20 +32,20 @@ describe("constraint de dedup", () => {
   });
 });
 
-describe("criarReposPrisma — totaisPorObra em SQL", () => {
+describe("criarReposPrisma — totaisPorCentroCusto em SQL", () => {
   it("soma em SQL, não em JS, e devolve string com 2 casas decimais", async () => {
-    const obra = await prisma.obra.create({ data: { nome: "Obra Sul" } });
+    const centroCusto = await prisma.centroCusto.create({ data: { nome: "Obra Sul" } });
     const repos = criarReposPrisma(prisma);
     const d = await repos.despesas.criar({
       nifFornecedor: "502544180", numeroFatura: "FT 200", dataFatura: "2026-08-01",
       baseTributavel: "10.00", valorIva: "2.30", valorTotal: "12.30",
       ficheiroUrl: "https://exemplo/f2.pdf", qrRaw: null, origem: "UPLOAD",
     });
-    await repos.despesas.atribuirObra(d.id, obra.id);
+    await repos.despesas.atribuirCentroCusto(d.id, centroCusto.id);
     await repos.despesas.confirmar(d.id);
 
-    const totais = await repos.despesas.totaisPorObra();
-    expect(totais).toEqual([{ obraId: obra.id, total: "12.30" }]);
+    const totais = await repos.despesas.totaisPorCentroCusto();
+    expect(totais).toEqual([{ centroCustoId: centroCusto.id, total: "12.30" }]);
   });
 
   it("aceita diretamente o shape de qrParaDespesa sem o campo extra nifValido", async () => {
@@ -63,22 +63,22 @@ describe("criarReposPrisma — totaisPorObra em SQL", () => {
 });
 
 describe("guard de eliminação (FK ON DELETE RESTRICT, real Postgres)", () => {
-  it("obras.eliminar rejeita quando há uma despesa associada, e apaga quando não há nenhuma", async () => {
+  it("centrosCusto.eliminar rejeita quando há uma despesa associada, e apaga quando não há nenhuma", async () => {
     const repos = criarReposPrisma(prisma);
-    const obra = await repos.obras.criar({ nome: "Obra Guard" });
+    const centroCusto = await repos.centrosCusto.criar({ nome: "Obra Guard" });
     const despesa = await repos.despesas.criar({
       nifFornecedor: "502544180", numeroFatura: "FT 300", dataFatura: "2026-08-01",
       baseTributavel: "1.00", valorIva: "0.23", valorTotal: "1.23",
       ficheiroUrl: "https://exemplo/f4.pdf", qrRaw: null, origem: "UPLOAD",
     });
-    await repos.despesas.atribuirObra(despesa.id, obra.id);
+    await repos.despesas.atribuirCentroCusto(despesa.id, centroCusto.id);
 
-    await expect(repos.obras.eliminar(obra.id)).rejects.toThrow(/despesas associadas/);
-    expect(await repos.obras.obterPorId(obra.id)).not.toBeNull();
+    await expect(repos.centrosCusto.eliminar(centroCusto.id)).rejects.toThrow(/despesas associadas/);
+    expect(await repos.centrosCusto.obterPorId(centroCusto.id)).not.toBeNull();
 
-    const semUso = await repos.obras.criar({ nome: "Obra Sem Uso" });
-    await expect(repos.obras.eliminar(semUso.id)).resolves.toBeUndefined();
-    expect(await repos.obras.obterPorId(semUso.id)).toBeNull();
+    const semUso = await repos.centrosCusto.criar({ nome: "Obra Sem Uso" });
+    await expect(repos.centrosCusto.eliminar(semUso.id)).resolves.toBeUndefined();
+    expect(await repos.centrosCusto.obterPorId(semUso.id)).toBeNull();
   });
 
   it("fornecedores.eliminar rejeita quando há uma despesa associada via fornecedorId", async () => {

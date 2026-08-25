@@ -1,7 +1,7 @@
 enum EstadoDespesa { POR_REVER CONFIRMADA ADIADA }
 enum OrigemDespesa { UPLOAD EMAIL }
 
-type Obra {
+type CentroCusto {
   id: ID!
   nome: String!
   ativa: Boolean!
@@ -34,6 +34,11 @@ type Funcionalidade {
   ativa: Boolean!
 }
 
+type RotulosCentroCusto {
+  singular: String!
+  plural: String!
+}
+
 type Despesa {
   id: ID!
   nifFornecedor: String!
@@ -46,20 +51,20 @@ type Despesa {
   ficheiroUrl: String!
   qrRaw: String
   origem: OrigemDespesa!
-  obra: Obra
+  centroCusto: CentroCusto
   estado: EstadoDespesa!
   lockPorId: String
   lockExpiraEm: String
 }
 
-type SugestaoObra {
-  obraId: ID!
+type SugestaoCentroCusto {
+  centroCustoId: ID!
   motivo: String!
   score: Float!
 }
 
-type TotalObra {
-  obra: Obra!
+type TotalCentroCusto {
+  centroCusto: CentroCusto!
   total: String!
 }
 
@@ -74,12 +79,12 @@ input AtualizarValoresInput {
   valorTotal: String
 }
 
-input CriarObraInput {
+input CriarCentroCustoInput {
   nome: String!
   ativa: Boolean
 }
 
-input AtualizarObraInput {
+input AtualizarCentroCustoInput {
   nome: String
   ativa: Boolean
 }
@@ -117,28 +122,29 @@ input AtualizarTarefaInput {
 
 type Query {
   filaRevisao(estado: EstadoDespesa): [Despesa!]!
-  despesas(estado: EstadoDespesa, obraId: ID): [Despesa!]!
+  despesas(estado: EstadoDespesa, centroCustoId: ID): [Despesa!]!
   despesa(id: ID!): Despesa
-  sugestaoObra(despesaId: ID!): SugestaoObra
-  totaisPorObra: [TotalObra!]!
-  obras: [Obra!]!
+  sugestaoCentroCusto(despesaId: ID!): SugestaoCentroCusto
+  totaisPorCentroCusto: [TotalCentroCusto!]!
+  centrosCusto: [CentroCusto!]!
   fornecedores: [Fornecedor!]!
   utilizadores: [Utilizador!]!
   tarefas: [Tarefa!]!
   funcionalidades: [Funcionalidade!]!
+  rotulosCentroCusto: RotulosCentroCusto!
 }
 
 type Mutation {
   ingerirFatura(ficheiroUrl: String!, qrRaw: String): IngerirFaturaResultado!
   bloquear(despesaId: ID!, utilizadorId: ID!): Despesa!
-  atribuirObra(despesaId: ID!, obraId: ID!): Despesa!
+  atribuirCentroCusto(despesaId: ID!, centroCustoId: ID!): Despesa!
   atualizarValores(despesaId: ID!, input: AtualizarValoresInput!): Despesa!
   confirmar(despesaId: ID!): Despesa!
   adiar(despesaId: ID!): Despesa!
 
-  criarObra(input: CriarObraInput!): Obra!
-  atualizarObra(id: ID!, input: AtualizarObraInput!): Obra!
-  eliminarObra(id: ID!): Boolean!
+  criarCentroCusto(input: CriarCentroCustoInput!): CentroCusto!
+  atualizarCentroCusto(id: ID!, input: AtualizarCentroCustoInput!): CentroCusto!
+  eliminarCentroCusto(id: ID!): Boolean!
 
   criarFornecedor(input: CriarFornecedorInput!): Fornecedor!
   atualizarFornecedor(id: ID!, input: AtualizarFornecedorInput!): Fornecedor!
@@ -154,4 +160,5 @@ type Mutation {
   eliminarTarefasFeitas: Int!
 
   atualizarFuncionalidade(chave: String!, ativa: Boolean!): Funcionalidade!
+  atualizarRotulosCentroCusto(singular: String!, plural: String!): RotulosCentroCusto!
 }

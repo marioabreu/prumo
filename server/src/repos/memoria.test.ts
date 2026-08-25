@@ -57,36 +57,36 @@ describe("criarReposMemoria", () => {
     await expect(repos.despesas.bloquear(d.id, "user-2")).rejects.toThrow();
   });
 
-  it("totaisPorObra só soma despesas CONFIRMADA com obraId", async () => {
+  it("totaisPorCentroCusto só soma despesas CONFIRMADA com centroCustoId", async () => {
     const repos = criarReposMemoria([{ nome: "Obra Norte", ativa: true }]);
-    const [obra] = await repos.obras.listar();
+    const [centroCusto] = await repos.centrosCusto.listar();
     const d1 = await repos.despesas.criar(inputBase);
-    await repos.despesas.atribuirObra(d1.id, obra.id);
+    await repos.despesas.atribuirCentroCusto(d1.id, centroCusto.id);
     await repos.despesas.confirmar(d1.id);
     const d2 = await repos.despesas.criar({ ...inputBase, numeroFatura: "FT 102" });
-    await repos.despesas.atribuirObra(d2.id, obra.id); // não confirmada — não deve contar
+    await repos.despesas.atribuirCentroCusto(d2.id, centroCusto.id); // não confirmada — não deve contar
 
-    const totais = await repos.despesas.totaisPorObra();
-    expect(totais).toEqual([{ obraId: obra.id, total: "25.95" }]);
+    const totais = await repos.despesas.totaisPorCentroCusto();
+    expect(totais).toEqual([{ centroCustoId: centroCusto.id, total: "25.95" }]);
   });
 
-  it("obras.criar rejeita nome duplicado", async () => {
+  it("centrosCusto.criar rejeita nome duplicado", async () => {
     const repos = criarReposMemoria();
-    await repos.obras.criar({ nome: "Obra Norte" });
-    await expect(repos.obras.criar({ nome: "Obra Norte" })).rejects.toThrow();
+    await repos.centrosCusto.criar({ nome: "Obra Norte" });
+    await expect(repos.centrosCusto.criar({ nome: "Obra Norte" })).rejects.toThrow();
   });
 
-  it("obras.eliminar rejeita quando há despesas associadas, mas apaga quando não há", async () => {
+  it("centrosCusto.eliminar rejeita quando há despesas associadas, mas apaga quando não há", async () => {
     const repos = criarReposMemoria([{ nome: "Obra Norte", ativa: true }]);
-    const [obra] = await repos.obras.listar();
+    const [centroCusto] = await repos.centrosCusto.listar();
     const d = await repos.despesas.criar(inputBase);
-    await repos.despesas.atribuirObra(d.id, obra.id);
+    await repos.despesas.atribuirCentroCusto(d.id, centroCusto.id);
 
-    await expect(repos.obras.eliminar(obra.id)).rejects.toThrow(/despesas associadas/);
+    await expect(repos.centrosCusto.eliminar(centroCusto.id)).rejects.toThrow(/despesas associadas/);
 
-    const outra = await repos.obras.criar({ nome: "Obra Sem Uso" });
-    await expect(repos.obras.eliminar(outra.id)).resolves.toBeUndefined();
-    expect(await repos.obras.obterPorId(outra.id)).toBeNull();
+    const outro = await repos.centrosCusto.criar({ nome: "Obra Sem Uso" });
+    await expect(repos.centrosCusto.eliminar(outro.id)).resolves.toBeUndefined();
+    expect(await repos.centrosCusto.obterPorId(outro.id)).toBeNull();
   });
 
   it("fornecedores.criar rejeita NIF duplicado, e eliminar respeita despesas associadas", async () => {
@@ -118,6 +118,22 @@ describe("criarReposMemoria", () => {
     expect(preenchido.nome).toBe("Preenchido Agora");
   });
 
+  it("configuracao.garantirExiste cria só se a chave não existir, nunca sobrescreve", async () => {
+    const repos = criarReposMemoria();
+    const criada = await repos.configuracao.garantirExiste("x", "valor-defeito");
+    expect(criada.valor).toBe("valor-defeito");
+
+    await repos.configuracao.definir("x", "valor-escolhido-pelo-utilizador");
+    const reafirmada = await repos.configuracao.garantirExiste("x", "valor-defeito");
+    expect(reafirmada.valor).toBe("valor-escolhido-pelo-utilizador");
+    expect(await repos.configuracao.obter("x")).toBe("valor-escolhido-pelo-utilizador");
+  });
+
+  it("configuracao.obter devolve null para uma chave nunca definida", async () => {
+    const repos = criarReposMemoria();
+    expect(await repos.configuracao.obter("inexistente")).toBeNull();
+  });
+
   it("utilizadores.criar rejeita email duplicado; eliminar não tem guard", async () => {
     const repos = criarReposMemoria();
     const u = await repos.utilizadores.criar({ nome: "Ana", email: "ana@exemplo.pt" });
@@ -126,16 +142,16 @@ describe("criarReposMemoria", () => {
     expect(await repos.utilizadores.obterPorId(u.id)).toBeNull();
   });
 
-  it("despesas.listar filtra por estado e por obraId", async () => {
+  it("despesas.listar filtra por estado e por centroCustoId", async () => {
     const repos = criarReposMemoria([{ nome: "Obra Norte", ativa: true }]);
-    const [obra] = await repos.obras.listar();
+    const [centroCusto] = await repos.centrosCusto.listar();
     const d1 = await repos.despesas.criar(inputBase);
-    await repos.despesas.atribuirObra(d1.id, obra.id);
+    await repos.despesas.atribuirCentroCusto(d1.id, centroCusto.id);
     await repos.despesas.confirmar(d1.id);
     await repos.despesas.criar({ ...inputBase, numeroFatura: "FT 102" });
 
     expect(await repos.despesas.listar()).toHaveLength(2);
     expect(await repos.despesas.listar({ estado: "CONFIRMADA" })).toEqual([expect.objectContaining({ id: d1.id })]);
-    expect(await repos.despesas.listar({ obraId: obra.id })).toEqual([expect.objectContaining({ id: d1.id })]);
+    expect(await repos.despesas.listar({ centroCustoId: centroCusto.id })).toEqual([expect.objectContaining({ id: d1.id })]);
   });
 });

@@ -1,13 +1,13 @@
 import { Prisma } from "@prisma/client";
 import type { PrismaClient } from "@prisma/client";
 import type {
-  Repos, CriarDespesaInput, AtualizarValoresInput, TotalObra, DespesasFiltro,
-  CriarObraInput, AtualizarObraInput,
+  Repos, CriarDespesaInput, AtualizarValoresInput, TotalCentroCusto, DespesasFiltro,
+  CriarCentroCustoInput, AtualizarCentroCustoInput,
   CriarFornecedorInput, AtualizarFornecedorInput,
   CriarUtilizadorInput, AtualizarUtilizadorInput,
   CriarTarefaInput, AtualizarTarefaInput,
 } from "./types.js";
-import { lockAtivoDeOutro, LOCK_TTL_MS, ERRO_OBRA_EM_USO, ERRO_FORNECEDOR_EM_USO } from "./types.js";
+import { lockAtivoDeOutro, LOCK_TTL_MS, ERRO_CENTRO_CUSTO_EM_USO, ERRO_FORNECEDOR_EM_USO } from "./types.js";
 
 function paraDominio(d: {
   baseTributavel: Prisma.Decimal; valorIva: Prisma.Decimal; valorTotal: Prisma.Decimal;
@@ -26,21 +26,21 @@ function ehViolacaoDeFK(e: unknown): boolean {
 
 export function criarReposPrisma(prisma: PrismaClient): Repos {
   return {
-    obras: {
-      async listar() { return prisma.obra.findMany(); },
-      async ativas() { return prisma.obra.findMany({ where: { ativa: true } }); },
-      async obterPorId(id) { return prisma.obra.findUnique({ where: { id } }); },
-      async criar(input: CriarObraInput) {
-        return prisma.obra.create({ data: { nome: input.nome, ativa: input.ativa ?? true } });
+    centrosCusto: {
+      async listar() { return prisma.centroCusto.findMany(); },
+      async ativas() { return prisma.centroCusto.findMany({ where: { ativa: true } }); },
+      async obterPorId(id) { return prisma.centroCusto.findUnique({ where: { id } }); },
+      async criar(input: CriarCentroCustoInput) {
+        return prisma.centroCusto.create({ data: { nome: input.nome, ativa: input.ativa ?? true } });
       },
-      async atualizar(id, patch: AtualizarObraInput) {
-        return prisma.obra.update({ where: { id }, data: patch });
+      async atualizar(id, patch: AtualizarCentroCustoInput) {
+        return prisma.centroCusto.update({ where: { id }, data: patch });
       },
       async eliminar(id) {
         try {
-          await prisma.obra.delete({ where: { id } });
+          await prisma.centroCusto.delete({ where: { id } });
         } catch (e) {
-          if (ehViolacaoDeFK(e)) throw new Error(ERRO_OBRA_EM_USO);
+          if (ehViolacaoDeFK(e)) throw new Error(ERRO_CENTRO_CUSTO_EM_USO);
           throw e;
         }
       },
@@ -128,6 +128,24 @@ export function criarReposPrisma(prisma: PrismaClient): Repos {
         return prisma.funcionalidade.update({ where: { chave }, data: { ativa } });
       },
     },
+    configuracao: {
+      async obter(chave) {
+        const row = await prisma.configuracao.findUnique({ where: { chave } });
+        return row?.valor ?? null;
+      },
+      async garantirExiste(chave, valorDefeito) {
+        const existente = await prisma.configuracao.findUnique({ where: { chave } });
+        if (existente) return existente;
+        return prisma.configuracao.create({ data: { chave, valor: valorDefeito } });
+      },
+      async definir(chave, valor) {
+        return prisma.configuracao.upsert({
+          where: { chave },
+          update: { valor },
+          create: { chave, valor },
+        });
+      },
+    },
     despesas: {
       async obterPorChaveDedup(nifFornecedor, numeroFatura, dataFatura) {
         const row = await prisma.despesa.findUnique({
@@ -145,7 +163,7 @@ export function criarReposPrisma(prisma: PrismaClient): Repos {
       },
       async listar(filtro?: DespesasFiltro) {
         const rows = await prisma.despesa.findMany({
-          where: { estado: filtro?.estado, obraId: filtro?.obraId },
+          where: { estado: filtro?.estado, centroCustoId: filtro?.centroCustoId },
           orderBy: { criadaEm: "asc" },
         });
         return rows.map(paraDominio);
@@ -161,8 +179,8 @@ export function criarReposPrisma(prisma: PrismaClient): Repos {
         });
         return paraDominio(row);
       },
-      async atribuirObra(id, obraId) {
-        const row = await prisma.despesa.update({ where: { id }, data: { obraId } });
+      async atribuirCentroCusto(id, centroCustoId) {
+        const row = await prisma.despesa.update({ where: { id }, data: { centroCustoId } });
         return paraDominio(row);
       },
       async atualizarValores(id, patch: AtualizarValoresInput) {
@@ -177,15 +195,15 @@ export function criarReposPrisma(prisma: PrismaClient): Repos {
         const row = await prisma.despesa.update({ where: { id }, data: { estado: "ADIADA" } });
         return paraDominio(row);
       },
-      async totaisPorObra(): Promise<TotalObra[]> {
+      async totaisPorCentroCusto(): Promise<TotalCentroCusto[]> {
         const grupos = await prisma.despesa.groupBy({
-          by: ["obraId"],
-          where: { estado: "CONFIRMADA", obraId: { not: null } },
+          by: ["centroCustoId"],
+          where: { estado: "CONFIRMADA", centroCustoId: { not: null } },
           _sum: { valorTotal: true },
         });
         return grupos
-          .filter((g) => g.obraId !== null)
-          .map((g) => ({ obraId: g.obraId as string, total: g._sum.valorTotal!.toFixed(2) }));
+          .filter((g) => g.centroCustoId !== null)
+          .map((g) => ({ centroCustoId: g.centroCustoId as string, total: g._sum.valorTotal!.toFixed(2) }));
       },
     },
   };

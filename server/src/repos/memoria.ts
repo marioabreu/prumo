@@ -1,26 +1,27 @@
 import { randomUUID } from "node:crypto";
 import type {
-  Repos, Obra, Fornecedor, Utilizador, Tarefa, Funcionalidade, Despesa, CriarDespesaInput,
-  AtualizarValoresInput, TotalObra, DespesasFiltro,
-  CriarObraInput, AtualizarObraInput,
+  Repos, CentroCusto, Fornecedor, Utilizador, Tarefa, Funcionalidade, Configuracao, Despesa, CriarDespesaInput,
+  AtualizarValoresInput, TotalCentroCusto, DespesasFiltro,
+  CriarCentroCustoInput, AtualizarCentroCustoInput,
   CriarFornecedorInput, AtualizarFornecedorInput,
   CriarUtilizadorInput, AtualizarUtilizadorInput,
   CriarTarefaInput, AtualizarTarefaInput,
 } from "./types.js";
-import { lockAtivoDeOutro, LOCK_TTL_MS, ERRO_OBRA_EM_USO, ERRO_FORNECEDOR_EM_USO } from "./types.js";
+import { lockAtivoDeOutro, LOCK_TTL_MS, ERRO_CENTRO_CUSTO_EM_USO, ERRO_FORNECEDOR_EM_USO } from "./types.js";
 
 /** Impl. em memória para testes de resolvers. Usa `number` só por conveniência — NUNCA copiar isto para o impl. Prisma (ver CLAUDE.md decisão #1). */
-export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
-  const obras = new Map<string, Obra>();
+export function criarReposMemoria(seedCentrosCusto: Omit<CentroCusto, "id">[] = []): Repos {
+  const centrosCusto = new Map<string, CentroCusto>();
   const fornecedores = new Map<string, Fornecedor>();
   const utilizadores = new Map<string, Utilizador>();
   const tarefas = new Map<string, Tarefa>();
   const funcionalidades = new Map<string, Funcionalidade>();
+  const configuracoes = new Map<string, Configuracao>();
   const despesas = new Map<string, Despesa>();
 
-  for (const o of seedObras) {
+  for (const c of seedCentrosCusto) {
     const id = randomUUID();
-    obras.set(id, { ...o, id });
+    centrosCusto.set(id, { ...c, id });
   }
 
   function encontrarPorDedup(nif: string, numero: string, data: string) {
@@ -29,8 +30,8 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
     );
   }
 
-  function obraEmUso(obraId: string) {
-    return [...despesas.values()].some((d) => d.obraId === obraId);
+  function centroCustoEmUso(centroCustoId: string) {
+    return [...despesas.values()].some((d) => d.centroCustoId === centroCustoId);
   }
 
   function fornecedorEmUso(fornecedorId: string) {
@@ -38,34 +39,34 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
   }
 
   return {
-    obras: {
-      async listar() { return [...obras.values()]; },
-      async ativas() { return [...obras.values()].filter((o) => o.ativa); },
-      async obterPorId(id) { return obras.get(id) ?? null; },
-      async criar(input: CriarObraInput) {
-        if ([...obras.values()].some((o) => o.nome === input.nome)) {
-          throw new Error(`Já existe uma obra com o nome "${input.nome}"`);
+    centrosCusto: {
+      async listar() { return [...centrosCusto.values()]; },
+      async ativas() { return [...centrosCusto.values()].filter((c) => c.ativa); },
+      async obterPorId(id) { return centrosCusto.get(id) ?? null; },
+      async criar(input: CriarCentroCustoInput) {
+        if ([...centrosCusto.values()].some((c) => c.nome === input.nome)) {
+          throw new Error(`Já existe um centro de custo com o nome "${input.nome}"`);
         }
         const id = randomUUID();
-        const obra: Obra = { id, nome: input.nome, ativa: input.ativa ?? true };
-        obras.set(id, obra);
-        return obra;
+        const centroCusto: CentroCusto = { id, nome: input.nome, ativa: input.ativa ?? true };
+        centrosCusto.set(id, centroCusto);
+        return centroCusto;
       },
-      async atualizar(id, patch: AtualizarObraInput) {
-        const obra = obras.get(id);
-        if (!obra) throw new Error(`Obra ${id} não encontrada`);
-        if (patch.nome && patch.nome !== obra.nome) {
-          if ([...obras.values()].some((o) => o.id !== id && o.nome === patch.nome)) {
-            throw new Error(`Já existe uma obra com o nome "${patch.nome}"`);
+      async atualizar(id, patch: AtualizarCentroCustoInput) {
+        const centroCusto = centrosCusto.get(id);
+        if (!centroCusto) throw new Error(`Centro de custo ${id} não encontrado`);
+        if (patch.nome && patch.nome !== centroCusto.nome) {
+          if ([...centrosCusto.values()].some((c) => c.id !== id && c.nome === patch.nome)) {
+            throw new Error(`Já existe um centro de custo com o nome "${patch.nome}"`);
           }
         }
-        Object.assign(obra, patch);
-        return obra;
+        Object.assign(centroCusto, patch);
+        return centroCusto;
       },
       async eliminar(id) {
-        if (!obras.has(id)) throw new Error(`Obra ${id} não encontrada`);
-        if (obraEmUso(id)) throw new Error(ERRO_OBRA_EM_USO);
-        obras.delete(id);
+        if (!centrosCusto.has(id)) throw new Error(`Centro de custo ${id} não encontrado`);
+        if (centroCustoEmUso(id)) throw new Error(ERRO_CENTRO_CUSTO_EM_USO);
+        centrosCusto.delete(id);
       },
     },
     fornecedores: {
@@ -193,6 +194,30 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
         return f;
       },
     },
+    configuracao: {
+      async obter(chave) {
+        return [...configuracoes.values()].find((c) => c.chave === chave)?.valor ?? null;
+      },
+      async garantirExiste(chave, valorDefeito) {
+        const existente = [...configuracoes.values()].find((c) => c.chave === chave);
+        if (existente) return existente;
+        const id = randomUUID();
+        const c: Configuracao = { id, chave, valor: valorDefeito };
+        configuracoes.set(id, c);
+        return c;
+      },
+      async definir(chave, valor) {
+        const existente = [...configuracoes.values()].find((c) => c.chave === chave);
+        if (existente) {
+          existente.valor = valor;
+          return existente;
+        }
+        const id = randomUUID();
+        const c: Configuracao = { id, chave, valor };
+        configuracoes.set(id, c);
+        return c;
+      },
+    },
     despesas: {
       async obterPorChaveDedup(nif, numero, data) {
         return encontrarPorDedup(nif, numero, data) ?? null;
@@ -203,7 +228,7 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
           id,
           ...input,
           fornecedorId: input.fornecedorId ?? null,
-          obraId: null,
+          centroCustoId: null,
           estado: "POR_REVER",
           lockPorId: null,
           lockExpiraEm: null,
@@ -216,7 +241,7 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
       async listar(filtro?: DespesasFiltro) {
         let resultado = [...despesas.values()];
         if (filtro?.estado) resultado = resultado.filter((d) => d.estado === filtro.estado);
-        if (filtro?.obraId) resultado = resultado.filter((d) => d.obraId === filtro.obraId);
+        if (filtro?.centroCustoId) resultado = resultado.filter((d) => d.centroCustoId === filtro.centroCustoId);
         return resultado;
       },
       async bloquear(id, utilizadorId) {
@@ -229,10 +254,10 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
         d.lockExpiraEm = new Date(Date.now() + LOCK_TTL_MS);
         return d;
       },
-      async atribuirObra(id, obraId) {
+      async atribuirCentroCusto(id, centroCustoId) {
         const d = despesas.get(id);
         if (!d) throw new Error(`Despesa ${id} não encontrada`);
-        d.obraId = obraId;
+        d.centroCustoId = centroCustoId;
         return d;
       },
       async atualizarValores(id, patch: AtualizarValoresInput) {
@@ -253,13 +278,13 @@ export function criarReposMemoria(seedObras: Omit<Obra, "id">[] = []): Repos {
         d.estado = "ADIADA";
         return d;
       },
-      async totaisPorObra(): Promise<TotalObra[]> {
+      async totaisPorCentroCusto(): Promise<TotalCentroCusto[]> {
         const somas = new Map<string, number>();
         for (const d of despesas.values()) {
-          if (d.estado !== "CONFIRMADA" || !d.obraId) continue;
-          somas.set(d.obraId, (somas.get(d.obraId) ?? 0) + Number(d.valorTotal));
+          if (d.estado !== "CONFIRMADA" || !d.centroCustoId) continue;
+          somas.set(d.centroCustoId, (somas.get(d.centroCustoId) ?? 0) + Number(d.valorTotal));
         }
-        return [...somas.entries()].map(([obraId, total]) => ({ obraId, total: total.toFixed(2) }));
+        return [...somas.entries()].map(([centroCustoId, total]) => ({ centroCustoId, total: total.toFixed(2) }));
       },
     },
   };

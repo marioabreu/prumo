@@ -5,10 +5,10 @@ import { criarLoaders } from "./loaders/index.js";
 import type { PesquisarEmpresa } from "./pesquisa-empresa/pesquisar-empresa.js";
 
 function ctxDeTeste(
-  seedObras: { nome: string; ativa: boolean }[] = [],
+  seedCentrosCusto: { nome: string; ativa: boolean }[] = [],
   pesquisarEmpresa: PesquisarEmpresa = async () => ({ nome: null, morada: null })
 ) {
-  const repos = criarReposMemoria(seedObras);
+  const repos = criarReposMemoria(seedCentrosCusto);
   return {
     repos,
     loaders: criarLoaders(repos),
@@ -75,20 +75,20 @@ describe("Mutation.ingerirFatura", () => {
 });
 
 describe("fluxo de revisão ponta-a-ponta", () => {
-  it("bloquear -> atribuirObra -> confirmar reflete-se em totaisPorObra", async () => {
+  it("bloquear -> atribuirCentroCusto -> confirmar reflete-se em totaisPorCentroCusto", async () => {
     const ctx = ctxDeTeste([{ nome: "Obra Norte", ativa: true }]);
-    const [obra] = await ctx.repos.obras.listar();
+    const [centroCusto] = await ctx.repos.centrosCusto.listar();
     const { despesa } = await resolvers.Mutation.ingerirFatura(
       {}, { ficheiroUrl: "https://x/f.pdf", qrRaw: "A:502544180*D:FT*F:20260725*G:FT1*O:25.95" }, ctx
     );
 
     await resolvers.Mutation.bloquear({}, { despesaId: despesa.id, utilizadorId: "user-1" }, ctx);
-    await resolvers.Mutation.atribuirObra({}, { despesaId: despesa.id, obraId: obra.id }, ctx);
+    await resolvers.Mutation.atribuirCentroCusto({}, { despesaId: despesa.id, centroCustoId: centroCusto.id }, ctx);
     const confirmada = await resolvers.Mutation.confirmar({}, { despesaId: despesa.id }, ctx);
     expect(confirmada.estado).toBe("CONFIRMADA");
 
-    const totais = await resolvers.Query.totaisPorObra({}, {}, ctx);
-    expect(totais).toEqual([{ obra, total: "25.95" }]);
+    const totais = await resolvers.Query.totaisPorCentroCusto({}, {}, ctx);
+    expect(totais).toEqual([{ centroCusto, total: "25.95" }]);
   });
 });
 
@@ -98,17 +98,17 @@ describe("Query.despesas e Query.despesa", () => {
     qrRaw: "A:502544180*D:FT*F:20260725*G:FT1*O:25.95",
   };
 
-  it("Query.despesas filtra por estado e obraId", async () => {
+  it("Query.despesas filtra por estado e centroCustoId", async () => {
     const ctx = ctxDeTeste([{ nome: "Obra Norte", ativa: true }]);
-    const [obra] = await ctx.repos.obras.listar();
+    const [centroCusto] = await ctx.repos.centrosCusto.listar();
     const { despesa } = await resolvers.Mutation.ingerirFatura({}, inputBase, ctx);
-    await resolvers.Mutation.atribuirObra({}, { despesaId: despesa.id, obraId: obra.id }, ctx);
+    await resolvers.Mutation.atribuirCentroCusto({}, { despesaId: despesa.id, centroCustoId: centroCusto.id }, ctx);
     await resolvers.Mutation.confirmar({}, { despesaId: despesa.id }, ctx);
 
     expect(await resolvers.Query.despesas({}, {}, ctx)).toHaveLength(1);
     expect(await resolvers.Query.despesas({}, { estado: "CONFIRMADA" }, ctx)).toHaveLength(1);
     expect(await resolvers.Query.despesas({}, { estado: "POR_REVER" }, ctx)).toHaveLength(0);
-    expect(await resolvers.Query.despesas({}, { obraId: obra.id }, ctx)).toHaveLength(1);
+    expect(await resolvers.Query.despesas({}, { centroCustoId: centroCusto.id }, ctx)).toHaveLength(1);
   });
 
   it("Query.despesa devolve a despesa por id, ou null se não existir", async () => {
@@ -119,32 +119,34 @@ describe("Query.despesas e Query.despesa", () => {
   });
 });
 
-describe("CRUD de Obra", () => {
-  it("criarObra/atualizarObra funcionam e rejeitam nome duplicado", async () => {
+describe("CRUD de CentroCusto", () => {
+  it("criarCentroCusto/atualizarCentroCusto funcionam e rejeitam nome duplicado", async () => {
     const ctx = ctxDeTeste();
-    const obra = await resolvers.Mutation.criarObra({}, { input: { nome: "Obra A" } }, ctx);
-    expect(obra.ativa).toBe(true);
+    const centroCusto = await resolvers.Mutation.criarCentroCusto({}, { input: { nome: "Obra A" } }, ctx);
+    expect(centroCusto.ativa).toBe(true);
 
-    const atualizada = await resolvers.Mutation.atualizarObra({}, { id: obra.id, input: { ativa: false } }, ctx);
+    const atualizada = await resolvers.Mutation.atualizarCentroCusto(
+      {}, { id: centroCusto.id, input: { ativa: false } }, ctx
+    );
     expect(atualizada.ativa).toBe(false);
 
     await expect(
-      resolvers.Mutation.criarObra({}, { input: { nome: "Obra A" } }, ctx)
+      resolvers.Mutation.criarCentroCusto({}, { input: { nome: "Obra A" } }, ctx)
     ).rejects.toThrow();
   });
 
-  it("eliminarObra rejeita quando há despesas associadas, e devolve true quando elimina", async () => {
+  it("eliminarCentroCusto rejeita quando há despesas associadas, e devolve true quando elimina", async () => {
     const ctx = ctxDeTeste([{ nome: "Obra Norte", ativa: true }]);
-    const [obra] = await ctx.repos.obras.listar();
+    const [centroCusto] = await ctx.repos.centrosCusto.listar();
     const { despesa } = await resolvers.Mutation.ingerirFatura(
       {}, { ficheiroUrl: "https://x/f.pdf", qrRaw: "A:502544180*D:FT*F:20260725*G:FT1*O:25.95" }, ctx
     );
-    await resolvers.Mutation.atribuirObra({}, { despesaId: despesa.id, obraId: obra.id }, ctx);
+    await resolvers.Mutation.atribuirCentroCusto({}, { despesaId: despesa.id, centroCustoId: centroCusto.id }, ctx);
 
-    await expect(resolvers.Mutation.eliminarObra({}, { id: obra.id }, ctx)).rejects.toThrow();
+    await expect(resolvers.Mutation.eliminarCentroCusto({}, { id: centroCusto.id }, ctx)).rejects.toThrow();
 
-    const outra = await resolvers.Mutation.criarObra({}, { input: { nome: "Obra Sem Uso" } }, ctx);
-    await expect(resolvers.Mutation.eliminarObra({}, { id: outra.id }, ctx)).resolves.toBe(true);
+    const outro = await resolvers.Mutation.criarCentroCusto({}, { input: { nome: "Obra Sem Uso" } }, ctx);
+    await expect(resolvers.Mutation.eliminarCentroCusto({}, { id: outro.id }, ctx)).resolves.toBe(true);
   });
 });
 
@@ -242,5 +244,25 @@ describe("Funcionalidades (feature flags)", () => {
     const lista = await resolvers.Query.funcionalidades({}, {}, ctx);
     expect(lista).toHaveLength(1);
     expect(lista[0].ativa).toBe(true);
+  });
+});
+
+describe("Rótulos de centro de custo (configuráveis)", () => {
+  it("Query.rotulosCentroCusto devolve Obra/Obras por defeito quando nada foi configurado", async () => {
+    const ctx = ctxDeTeste();
+    expect(await resolvers.Query.rotulosCentroCusto({}, {}, ctx)).toEqual({
+      singular: "Obra", plural: "Obras",
+    });
+  });
+
+  it("Mutation.atualizarRotulosCentroCusto muda o que Query.rotulosCentroCusto devolve depois", async () => {
+    const ctx = ctxDeTeste();
+    const atualizado = await resolvers.Mutation.atualizarRotulosCentroCusto(
+      {}, { singular: "Projeto", plural: "Projetos" }, ctx
+    );
+    expect(atualizado).toEqual({ singular: "Projeto", plural: "Projetos" });
+    expect(await resolvers.Query.rotulosCentroCusto({}, {}, ctx)).toEqual({
+      singular: "Projeto", plural: "Projetos",
+    });
   });
 });

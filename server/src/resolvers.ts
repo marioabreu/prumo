@@ -1,8 +1,11 @@
 import type { GraphQLContext } from "./context.js";
 import { qrParaDespesa, nifValido } from "@prumo/shared";
-import { sugerirObra } from "./sugestao/sugerir-obra.js";
+import { sugerirCentroCusto } from "./sugestao/sugerir-centro-custo.js";
+import {
+  obterRotulosCentroCusto, CHAVE_LABEL_SINGULAR, CHAVE_LABEL_PLURAL,
+} from "./configuracao/rotulos.js";
 import type {
-  EstadoDespesa, CriarObraInput, AtualizarObraInput,
+  EstadoDespesa, CriarCentroCustoInput, AtualizarCentroCustoInput,
   CriarFornecedorInput, AtualizarFornecedorInput,
   CriarUtilizadorInput, AtualizarUtilizadorInput,
   CriarTarefaInput, AtualizarTarefaInput,
@@ -24,33 +27,36 @@ export const resolvers = {
       ctx.repos.despesas.listar({ estado: args.estado ?? "POR_REVER" }),
 
     despesas: (
-      _: unknown, args: { estado?: EstadoDespesa; obraId?: string }, ctx: GraphQLContext
-    ) => ctx.repos.despesas.listar({ estado: args.estado, obraId: args.obraId }),
+      _: unknown, args: { estado?: EstadoDespesa; centroCustoId?: string }, ctx: GraphQLContext
+    ) => ctx.repos.despesas.listar({ estado: args.estado, centroCustoId: args.centroCustoId }),
 
     despesa: (_: unknown, args: { id: string }, ctx: GraphQLContext) =>
       ctx.repos.despesas.obterPorId(args.id),
 
-    sugestaoObra: async (_: unknown, args: { despesaId: string }, ctx: GraphQLContext) => {
+    sugestaoCentroCusto: async (_: unknown, args: { despesaId: string }, ctx: GraphQLContext) => {
       const despesa = await ctx.repos.despesas.obterPorId(args.despesaId);
       if (!despesa) return null;
-      const [historico, obrasAtivas] = await Promise.all([
+      const [historico, centrosCustoAtivos] = await Promise.all([
         ctx.repos.fornecedores.historico(despesa.nifFornecedor, 10),
-        ctx.repos.obras.ativas(),
+        ctx.repos.centrosCusto.ativas(),
       ]);
-      return sugerirObra(historico, obrasAtivas);
+      return sugerirCentroCusto(historico, centrosCustoAtivos);
     },
 
-    totaisPorObra: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
-      const totais = await ctx.repos.despesas.totaisPorObra();
-      const obras = await Promise.all(totais.map((t) => ctx.loaders.obraPorId.load(t.obraId)));
-      return totais.map((t, i) => ({ obra: obras[i]!, total: t.total }));
+    totaisPorCentroCusto: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      const totais = await ctx.repos.despesas.totaisPorCentroCusto();
+      const centrosCusto = await Promise.all(
+        totais.map((t) => ctx.loaders.centroCustoPorId.load(t.centroCustoId))
+      );
+      return totais.map((t, i) => ({ centroCusto: centrosCusto[i]!, total: t.total }));
     },
 
-    obras: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.obras.listar(),
+    centrosCusto: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.centrosCusto.listar(),
     fornecedores: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.fornecedores.listar(),
     utilizadores: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.utilizadores.listar(),
     tarefas: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.tarefas.listar(),
     funcionalidades: (_: unknown, __: unknown, ctx: GraphQLContext) => ctx.repos.funcionalidades.listar(),
+    rotulosCentroCusto: (_: unknown, __: unknown, ctx: GraphQLContext) => obterRotulosCentroCusto(ctx.repos),
   },
 
   Mutation: {
@@ -77,8 +83,9 @@ export const resolvers = {
     bloquear: (_: unknown, args: { despesaId: string; utilizadorId: string }, ctx: GraphQLContext) =>
       ctx.repos.despesas.bloquear(args.despesaId, args.utilizadorId),
 
-    atribuirObra: (_: unknown, args: { despesaId: string; obraId: string }, ctx: GraphQLContext) =>
-      ctx.repos.despesas.atribuirObra(args.despesaId, args.obraId),
+    atribuirCentroCusto: (
+      _: unknown, args: { despesaId: string; centroCustoId: string }, ctx: GraphQLContext
+    ) => ctx.repos.despesas.atribuirCentroCusto(args.despesaId, args.centroCustoId),
 
     atualizarValores: (
       _: unknown, args: { despesaId: string; input: Record<string, string> }, ctx: GraphQLContext
@@ -90,14 +97,15 @@ export const resolvers = {
     adiar: (_: unknown, args: { despesaId: string }, ctx: GraphQLContext) =>
       ctx.repos.despesas.adiar(args.despesaId),
 
-    criarObra: (_: unknown, args: { input: CriarObraInput }, ctx: GraphQLContext) =>
-      ctx.repos.obras.criar(args.input),
+    criarCentroCusto: (_: unknown, args: { input: CriarCentroCustoInput }, ctx: GraphQLContext) =>
+      ctx.repos.centrosCusto.criar(args.input),
 
-    atualizarObra: (_: unknown, args: { id: string; input: AtualizarObraInput }, ctx: GraphQLContext) =>
-      ctx.repos.obras.atualizar(args.id, args.input),
+    atualizarCentroCusto: (
+      _: unknown, args: { id: string; input: AtualizarCentroCustoInput }, ctx: GraphQLContext
+    ) => ctx.repos.centrosCusto.atualizar(args.id, args.input),
 
-    eliminarObra: async (_: unknown, args: { id: string }, ctx: GraphQLContext) => {
-      await ctx.repos.obras.eliminar(args.id);
+    eliminarCentroCusto: async (_: unknown, args: { id: string }, ctx: GraphQLContext) => {
+      await ctx.repos.centrosCusto.eliminar(args.id);
       return true;
     },
 
@@ -153,12 +161,20 @@ export const resolvers = {
     atualizarFuncionalidade: (
       _: unknown, args: { chave: string; ativa: boolean }, ctx: GraphQLContext
     ) => ctx.repos.funcionalidades.atualizar(args.chave, args.ativa),
+
+    atualizarRotulosCentroCusto: async (
+      _: unknown, args: { singular: string; plural: string }, ctx: GraphQLContext
+    ) => {
+      await ctx.repos.configuracao.definir(CHAVE_LABEL_SINGULAR, args.singular);
+      await ctx.repos.configuracao.definir(CHAVE_LABEL_PLURAL, args.plural);
+      return { singular: args.singular, plural: args.plural };
+    },
   },
 
   Despesa: {
     fornecedor: (despesa: { nifFornecedor: string }, _: unknown, ctx: GraphQLContext) =>
       ctx.loaders.fornecedorPorNif.load(despesa.nifFornecedor),
-    obra: (despesa: { obraId: string | null }, _: unknown, ctx: GraphQLContext) =>
-      despesa.obraId ? ctx.loaders.obraPorId.load(despesa.obraId) : null,
+    centroCusto: (despesa: { centroCustoId: string | null }, _: unknown, ctx: GraphQLContext) =>
+      despesa.centroCustoId ? ctx.loaders.centroCustoPorId.load(despesa.centroCustoId) : null,
   },
 };

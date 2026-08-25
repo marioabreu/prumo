@@ -1,6 +1,6 @@
 export type EstadoDespesa = "POR_REVER" | "CONFIRMADA" | "ADIADA";
 
-export interface Obra {
+export interface CentroCusto {
   id: string;
   nome: string;
   ativa: boolean;
@@ -33,6 +33,12 @@ export interface Funcionalidade {
   ativa: boolean;
 }
 
+export interface Configuracao {
+  id: string;
+  chave: string;
+  valor: string;
+}
+
 export interface Despesa {
   id: string;
   nifFornecedor: string;
@@ -45,7 +51,7 @@ export interface Despesa {
   ficheiroUrl: string;
   qrRaw: string | null;
   origem: "UPLOAD" | "EMAIL";
-  obraId: string | null;
+  centroCustoId: string | null;
   estado: EstadoDespesa;
   lockPorId: string | null;
   lockExpiraEm: Date | null;
@@ -73,15 +79,15 @@ export interface AtualizarValoresInput {
 
 export interface DespesasFiltro {
   estado?: EstadoDespesa;
-  obraId?: string;
+  centroCustoId?: string;
 }
 
-export interface CriarObraInput {
+export interface CriarCentroCustoInput {
   nome: string;
   ativa?: boolean;
 }
 
-export interface AtualizarObraInput {
+export interface AtualizarCentroCustoInput {
   nome?: string;
   ativa?: boolean;
 }
@@ -117,8 +123,8 @@ export interface AtualizarTarefaInput {
   feita?: boolean;
 }
 
-export interface TotalObra {
-  obraId: string;
+export interface TotalCentroCusto {
+  centroCustoId: string;
   total: string;
 }
 
@@ -127,18 +133,18 @@ export const LOCK_TTL_MS = 5 * 60 * 1000;
 // Mensagens partilhadas pelo guard de eliminação — memoria.ts e prisma.ts têm de
 // devolver exatamente o mesmo texto para que os testes de resolvers (escritos só
 // contra o repo em memória) valham para os dois backends.
-export const ERRO_OBRA_EM_USO =
-  "Não é possível eliminar: existem despesas associadas a esta obra.";
+export const ERRO_CENTRO_CUSTO_EM_USO =
+  "Não é possível eliminar: existem despesas associadas a este centro de custo.";
 export const ERRO_FORNECEDOR_EM_USO =
   "Não é possível eliminar: existem despesas associadas a este fornecedor.";
 
 export interface Repos {
-  obras: {
-    listar(): Promise<Obra[]>;
-    ativas(): Promise<Obra[]>;
-    obterPorId(id: string): Promise<Obra | null>;
-    criar(input: CriarObraInput): Promise<Obra>;
-    atualizar(id: string, patch: AtualizarObraInput): Promise<Obra>;
+  centrosCusto: {
+    listar(): Promise<CentroCusto[]>;
+    ativas(): Promise<CentroCusto[]>;
+    obterPorId(id: string): Promise<CentroCusto | null>;
+    criar(input: CriarCentroCustoInput): Promise<CentroCusto>;
+    atualizar(id: string, patch: AtualizarCentroCustoInput): Promise<CentroCusto>;
     eliminar(id: string): Promise<void>;
   };
   fornecedores: {
@@ -172,6 +178,13 @@ export interface Repos {
     definir(chave: string, nome: string): Promise<Funcionalidade>;
     atualizar(chave: string, ativa: boolean): Promise<Funcionalidade>;
   };
+  configuracao: {
+    obter(chave: string): Promise<string | null>;
+    // Idempotente: cria com valorDefeito se a chave ainda não existir; nunca
+    // sobrescreve um valor já guardado (é a escolha do utilizador).
+    garantirExiste(chave: string, valorDefeito: string): Promise<Configuracao>;
+    definir(chave: string, valor: string): Promise<Configuracao>;
+  };
   despesas: {
     obterPorChaveDedup(
       nifFornecedor: string,
@@ -182,11 +195,11 @@ export interface Repos {
     obterPorId(id: string): Promise<Despesa | null>;
     listar(filtro?: DespesasFiltro): Promise<Despesa[]>;
     bloquear(id: string, utilizadorId: string): Promise<Despesa>;
-    atribuirObra(id: string, obraId: string): Promise<Despesa>;
+    atribuirCentroCusto(id: string, centroCustoId: string): Promise<Despesa>;
     atualizarValores(id: string, patch: AtualizarValoresInput): Promise<Despesa>;
     confirmar(id: string): Promise<Despesa>;
     adiar(id: string): Promise<Despesa>;
-    totaisPorObra(): Promise<TotalObra[]>;
+    totaisPorCentroCusto(): Promise<TotalCentroCusto[]>;
   };
 }
 

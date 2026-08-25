@@ -11,11 +11,13 @@ import { criarReposPrisma } from "./repos/prisma.js";
 import { criarContexto } from "./context.js";
 import { criarStorageLocal } from "./storage/local.js";
 import { semearFuncionalidades } from "./funcionalidades/registo.js";
+import { semearRotulosCentroCusto } from "./configuracao/rotulos.js";
 
 const typeDefs = readFileSync(new URL("../schema.graphql", import.meta.url), "utf-8");
 const prisma = new PrismaClient();
 const repos = criarReposPrisma(prisma);
 await semearFuncionalidades(repos);
+await semearRotulosCentroCusto(repos);
 
 const uploadsDir = fileURLToPath(new URL("../uploads/", import.meta.url));
 const storage = criarStorageLocal(uploadsDir, "http://localhost:4000/files");

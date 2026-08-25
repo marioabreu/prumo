@@ -3,8 +3,8 @@ import type { Repos } from "../repos/types.js";
 
 export function criarLoaders(repos: Repos) {
   return {
-    obraPorId: new DataLoader(async (ids: readonly string[]) => {
-      const resultados = await Promise.all(ids.map((id) => repos.obras.obterPorId(id)));
+    centroCustoPorId: new DataLoader(async (ids: readonly string[]) => {
+      const resultados = await Promise.all(ids.map((id) => repos.centrosCusto.obterPorId(id)));
       return resultados;
     }),
     fornecedorPorNif: new DataLoader(async (nifs: readonly string[]) => {
