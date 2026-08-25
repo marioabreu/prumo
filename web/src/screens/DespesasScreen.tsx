@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { DESPESAS, DESPESA, ATUALIZAR_VALORES, ATRIBUIR_OBRA, OBRAS, type EstadoDespesa } from "../graphql.js";
+import { DESPESAS, DESPESA, ATUALIZAR_VALORES, ATRIBUIR_CENTRO_CUSTO, CENTROS_CUSTO, type EstadoDespesa } from "../graphql.js";
 import { Card } from "../ui/Card.js";
 import { ListRow } from "../ui/ListRow.js";
 import { StatusDot, type StatusDotTone } from "../ui/StatusDot.js";
@@ -9,6 +9,7 @@ import { StatRow } from "../ui/StatRow.js";
 import { TextField } from "../ui/TextField.js";
 import { Button } from "../ui/Button.js";
 import { ShortcutButton } from "../ui/ShortcutButton.js";
+import { useRotulosCentroCusto } from "../ui/useRotulosCentroCusto.js";
 import styles from "./DespesasScreen.module.css";
 
 const TOM_POR_ESTADO: Record<EstadoDespesa, StatusDotTone> = {
@@ -18,21 +19,22 @@ const TOM_POR_ESTADO: Record<EstadoDespesa, StatusDotTone> = {
 };
 
 export function DespesasScreen() {
+  const rotulos = useRotulosCentroCusto();
   const [filtroEstado, setFiltroEstado] = useState<EstadoDespesa | "">("");
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState<string | null>(null);
 
   const { data: listaData } = useQuery(DESPESAS, {
-    variables: { estado: filtroEstado || undefined, obraId: undefined },
+    variables: { estado: filtroEstado || undefined, centroCustoId: undefined },
   });
   const { data: detalheData } = useQuery(DESPESA, {
     variables: { id: selecionadaId! },
     skip: !selecionadaId,
   });
-  const { data: obrasData } = useQuery(OBRAS);
+  const { data: centrosCustoData } = useQuery(CENTROS_CUSTO);
 
   const [atualizarValores] = useMutation(ATUALIZAR_VALORES);
-  const [atribuirObra] = useMutation(ATRIBUIR_OBRA);
+  const [atribuirCentroCusto] = useMutation(ATRIBUIR_CENTRO_CUSTO);
 
   const despesas = listaData?.despesas ?? [];
   const despesa = detalheData?.despesa ?? null;
@@ -58,10 +60,10 @@ export function DespesasScreen() {
     setMensagem("Valores guardados.");
   }
 
-  async function reatribuirObra(obraId: string) {
+  async function reatribuirCentroCusto(centroCustoId: string) {
     if (!despesa) return;
-    await atribuirObra({ variables: { despesaId: despesa.id, obraId } });
-    setMensagem("Obra atualizada.");
+    await atribuirCentroCusto({ variables: { despesaId: despesa.id, centroCustoId } });
+    setMensagem(`${rotulos.singular} atualizada.`);
   }
 
   return (
@@ -120,15 +122,15 @@ export function DespesasScreen() {
             <Button variant="primary" onClick={guardarValores}>Guardar valores</Button>
 
             <div>
-              <Label>Obra</Label>
+              <Label>{rotulos.singular}</Label>
               <div className={styles.obraGrid}>
-                {(obrasData?.obras ?? []).map((o, i) => (
+                {(centrosCustoData?.centrosCusto ?? []).map((c, i) => (
                   <ShortcutButton
-                    key={o.id}
+                    key={c.id}
                     index={i + 1}
-                    label={o.nome}
-                    selected={despesa.obra?.id === o.id}
-                    onClick={() => reatribuirObra(o.id)}
+                    label={c.nome}
+                    selected={despesa.centroCusto?.id === c.id}
+                    onClick={() => reatribuirCentroCusto(c.id)}
                   />
                 ))}
               </div>

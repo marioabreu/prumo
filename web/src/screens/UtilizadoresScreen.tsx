@@ -5,7 +5,7 @@ import { Card } from "../ui/Card.js";
 import { ListRow } from "../ui/ListRow.js";
 import { TextField } from "../ui/TextField.js";
 import { Button } from "../ui/Button.js";
-import styles from "./ObrasScreen.module.css";
+import styles from "./CentrosCustoScreen.module.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

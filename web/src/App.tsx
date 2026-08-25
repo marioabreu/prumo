@@ -4,7 +4,7 @@ import { client } from "./apollo.js";
 import { AppShell } from "./ui/AppShell.js";
 import { FilaRevisao } from "./FilaRevisao.js";
 import { CarregarFaturaScreen } from "./screens/CarregarFaturaScreen.js";
-import { ObrasScreen } from "./screens/ObrasScreen.js";
+import { CentrosCustoScreen } from "./screens/CentrosCustoScreen.js";
 import { FornecedoresScreen } from "./screens/FornecedoresScreen.js";
 import { UtilizadoresScreen } from "./screens/UtilizadoresScreen.js";
 import { DespesasScreen } from "./screens/DespesasScreen.js";
@@ -19,7 +19,7 @@ function App() {
         <Route element={<AppShell />}>
           <Route path="/" element={<FilaRevisao />} />
           <Route path="/carregar-fatura" element={<CarregarFaturaScreen />} />
-          <Route path="/obras" element={<ObrasScreen />} />
+          <Route path="/centros-custo" element={<CentrosCustoScreen />} />
           <Route path="/fornecedores" element={<FornecedoresScreen />} />
           <Route path="/despesas" element={<DespesasScreen />} />
           <Route path="/utilizadores" element={<UtilizadoresScreen />} />

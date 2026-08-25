@@ -4,8 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { MockedProvider } from "@apollo/client/testing/react";
 import { FilaRevisao } from "./FilaRevisao.js";
 import {
-  FILA_REVISAO, SUGESTAO_OBRA, OBRAS, TOTAIS_POR_OBRA,
-  ATRIBUIR_OBRA, CONFIRMAR, ATUALIZAR_VALORES,
+  FILA_REVISAO, SUGESTAO_CENTRO_CUSTO, CENTROS_CUSTO, TOTAIS_POR_CENTRO_CUSTO,
+  ATRIBUIR_CENTRO_CUSTO, CONFIRMAR, ATUALIZAR_VALORES,
 } from "./graphql.js";
 
 const despesaMock = {
@@ -16,20 +16,20 @@ const despesaMock = {
   qrRaw: "A:502544180", estado: "POR_REVER",
 };
 
-const obrasMock = [
-  { __typename: "Obra", id: "o1", nome: "Obra Norte", ativa: true },
-  { __typename: "Obra", id: "o2", nome: "Obra Sul", ativa: true },
+const centrosCustoMock = [
+  { __typename: "CentroCusto", id: "o1", nome: "Obra Norte", ativa: true },
+  { __typename: "CentroCusto", id: "o2", nome: "Obra Sul", ativa: true },
 ];
 
 function baseMocks() {
   return [
     { request: { query: FILA_REVISAO }, result: { data: { filaRevisao: [despesaMock] } } },
-    { request: { query: OBRAS }, result: { data: { obras: obrasMock } } },
+    { request: { query: CENTROS_CUSTO }, result: { data: { centrosCusto: centrosCustoMock } } },
     {
-      request: { query: SUGESTAO_OBRA, variables: { despesaId: "d1" } },
-      result: { data: { sugestaoObra: { obraId: "o1", motivo: "3 das últimas 4 faturas deste fornecedor", score: 0.8 } } },
+      request: { query: SUGESTAO_CENTRO_CUSTO, variables: { despesaId: "d1" } },
+      result: { data: { sugestaoCentroCusto: { centroCustoId: "o1", motivo: "3 das últimas 4 faturas deste fornecedor", score: 0.8 } } },
     },
-    { request: { query: TOTAIS_POR_OBRA }, result: { data: { totaisPorObra: [] } } },
+    { request: { query: TOTAIS_POR_CENTRO_CUSTO }, result: { data: { totaisPorCentroCusto: [] } } },
   ];
 }
 
@@ -48,13 +48,13 @@ describe("FilaRevisao", () => {
     expect(await screen.findByText(/3 das últimas 4 faturas deste fornecedor/)).toBeInTheDocument();
   });
 
-  it("confirmar com a obra sugerida remove o cartão da fila (tecla Enter)", async () => {
+  it("confirmar com o centro de custo sugerido remove o cartão da fila (tecla Enter)", async () => {
     const user = userEvent.setup();
     const mocks = [
       ...baseMocks(),
       {
-        request: { query: ATRIBUIR_OBRA, variables: { despesaId: "d1", obraId: "o1" } },
-        result: { data: { atribuirObra: { __typename: "Despesa", id: "d1", obra: { __typename: "Obra", id: "o1", nome: "Obra Norte", ativa: true } } } },
+        request: { query: ATRIBUIR_CENTRO_CUSTO, variables: { despesaId: "d1", centroCustoId: "o1" } },
+        result: { data: { atribuirCentroCusto: { __typename: "Despesa", id: "d1", centroCusto: { __typename: "CentroCusto", id: "o1", nome: "Obra Norte", ativa: true } } } },
       },
       {
         request: { query: CONFIRMAR, variables: { despesaId: "d1" } },
@@ -73,7 +73,7 @@ describe("FilaRevisao", () => {
     });
   });
 
-  it("a tecla 2 seleciona a segunda obra da grelha de atalhos", async () => {
+  it("a tecla 2 seleciona o segundo centro de custo da grelha de atalhos", async () => {
     const user = userEvent.setup();
     renderFila(baseMocks());
 

@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MockedProvider } from "@apollo/client/testing/react";
 import { DespesasScreen } from "./DespesasScreen.js";
-import { DESPESAS, DESPESA, ATUALIZAR_VALORES, ATRIBUIR_OBRA, OBRAS } from "../graphql.js";
+import { DESPESAS, DESPESA, ATUALIZAR_VALORES, ATRIBUIR_CENTRO_CUSTO, CENTROS_CUSTO } from "../graphql.js";
 
 const despesaResumo = {
   __typename: "Despesa", id: "d1", nifFornecedor: "502544180",
@@ -16,16 +16,16 @@ const despesaDetalhe = {
   fornecedor: { __typename: "Fornecedor", nome: "Leroy Merlin" },
   numeroFatura: "FT 1", dataFatura: "2026-08-01", baseTributavel: "21.09", valorIva: "4.86",
   valorTotal: "25.95", ficheiroUrl: "https://exemplo/f.pdf", qrRaw: "A:x", origem: "UPLOAD",
-  obra: null, estado: "POR_REVER",
+  centroCusto: null, estado: "POR_REVER",
 };
 
 function baseMocks() {
   return [
-    { request: { query: DESPESAS, variables: { estado: undefined, obraId: undefined } }, result: { data: { despesas: [despesaResumo] } } },
+    { request: { query: DESPESAS, variables: { estado: undefined, centroCustoId: undefined } }, result: { data: { despesas: [despesaResumo] } } },
     { request: { query: DESPESA, variables: { id: "d1" } }, result: { data: { despesa: despesaDetalhe } } },
     {
-      request: { query: OBRAS },
-      result: { data: { obras: [{ __typename: "Obra", id: "o1", nome: "Obra Norte", ativa: true }] } },
+      request: { query: CENTROS_CUSTO },
+      result: { data: { centrosCusto: [{ __typename: "CentroCusto", id: "o1", nome: "Obra Norte", ativa: true }] } },
     },
   ];
 }
@@ -76,17 +76,17 @@ describe("DespesasScreen", () => {
     expect(await screen.findByText(/valores guardados/i)).toBeInTheDocument();
   });
 
-  it("reatribui a obra via o grid de atalhos", async () => {
+  it("reatribui o centro de custo via o grid de atalhos", async () => {
     const user = userEvent.setup();
     const mocks = [
       ...baseMocks(),
       {
-        request: { query: ATRIBUIR_OBRA, variables: { despesaId: "d1", obraId: "o1" } },
+        request: { query: ATRIBUIR_CENTRO_CUSTO, variables: { despesaId: "d1", centroCustoId: "o1" } },
         result: {
           data: {
-            atribuirObra: {
+            atribuirCentroCusto: {
               __typename: "Despesa", id: "d1",
-              obra: { __typename: "Obra", id: "o1", nome: "Obra Norte", ativa: true },
+              centroCusto: { __typename: "CentroCusto", id: "o1", nome: "Obra Norte", ativa: true },
             },
           },
         },

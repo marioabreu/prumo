@@ -44,15 +44,15 @@ export const INGERIR_FATURA: TypedDocumentNode<
   }
 `;
 
-export interface TotalObra {
-  obra: { id: string; nome: string };
+export interface TotalCentroCusto {
+  centroCusto: { id: string; nome: string };
   total: string;
 }
 
-export const TOTAIS_POR_OBRA: TypedDocumentNode<{ totaisPorObra: TotalObra[] }> = gql`
-  query TotaisPorObra {
-    totaisPorObra {
-      obra { id nome }
+export const TOTAIS_POR_CENTRO_CUSTO: TypedDocumentNode<{ totaisPorCentroCusto: TotalCentroCusto[] }> = gql`
+  query TotaisPorCentroCusto {
+    totaisPorCentroCusto {
+      centroCusto { id nome }
       total
     }
   }
@@ -65,14 +65,14 @@ export interface DespesaDetalhe extends Despesa {
   ficheiroUrl: string;
   qrRaw: string | null;
   origem: "UPLOAD" | "EMAIL";
-  obra: { id: string; nome: string } | null;
+  centroCusto: { id: string; nome: string } | null;
 }
 
 export const DESPESAS: TypedDocumentNode<
-  { despesas: Despesa[] }, { estado?: EstadoDespesa; obraId?: string }
+  { despesas: Despesa[] }, { estado?: EstadoDespesa; centroCustoId?: string }
 > = gql`
-  query Despesas($estado: EstadoDespesa, $obraId: ID) {
-    despesas(estado: $estado, obraId: $obraId) {
+  query Despesas($estado: EstadoDespesa, $centroCustoId: ID) {
+    despesas(estado: $estado, centroCustoId: $centroCustoId) {
       id
       nifFornecedor
       fornecedor { nome }
@@ -98,7 +98,7 @@ export const DESPESA: TypedDocumentNode<{ despesa: DespesaDetalhe | null }, { id
       ficheiroUrl
       qrRaw
       origem
-      obra { id nome }
+      centroCusto { id nome }
       estado
     }
   }
@@ -123,65 +123,71 @@ export const ATUALIZAR_VALORES: TypedDocumentNode<
   }
 `;
 
-export interface SugestaoObra {
-  obraId: string;
+export interface SugestaoCentroCusto {
+  centroCustoId: string;
   motivo: string;
   score: number;
 }
 
-export const SUGESTAO_OBRA: TypedDocumentNode<
-  { sugestaoObra: SugestaoObra | null }, { despesaId: string }
+export const SUGESTAO_CENTRO_CUSTO: TypedDocumentNode<
+  { sugestaoCentroCusto: SugestaoCentroCusto | null }, { despesaId: string }
 > = gql`
-  query SugestaoObra($despesaId: ID!) {
-    sugestaoObra(despesaId: $despesaId) { obraId motivo score }
+  query SugestaoCentroCusto($despesaId: ID!) {
+    sugestaoCentroCusto(despesaId: $despesaId) { centroCustoId motivo score }
   }
 `;
 
-export interface Obra {
+export interface CentroCusto {
   id: string;
   nome: string;
   ativa: boolean;
 }
 
-export const OBRAS: TypedDocumentNode<{ obras: Obra[] }> = gql`
-  query Obras { obras { id nome ativa } }
+export const CENTROS_CUSTO: TypedDocumentNode<{ centrosCusto: CentroCusto[] }> = gql`
+  query CentrosCusto { centrosCusto { id nome ativa } }
 `;
 
-export interface CriarObraInput {
+export interface CriarCentroCustoInput {
   nome: string;
   ativa?: boolean;
 }
 
-export interface AtualizarObraInput {
+export interface AtualizarCentroCustoInput {
   nome?: string;
   ativa?: boolean;
 }
 
-export const CRIAR_OBRA: TypedDocumentNode<{ criarObra: Obra }, { input: CriarObraInput }> = gql`
-  mutation CriarObra($input: CriarObraInput!) {
-    criarObra(input: $input) { id nome ativa }
-  }
-`;
-
-export const ATUALIZAR_OBRA: TypedDocumentNode<
-  { atualizarObra: Obra }, { id: string; input: AtualizarObraInput }
+export const CRIAR_CENTRO_CUSTO: TypedDocumentNode<
+  { criarCentroCusto: CentroCusto }, { input: CriarCentroCustoInput }
 > = gql`
-  mutation AtualizarObra($id: ID!, $input: AtualizarObraInput!) {
-    atualizarObra(id: $id, input: $input) { id nome ativa }
+  mutation CriarCentroCusto($input: CriarCentroCustoInput!) {
+    criarCentroCusto(input: $input) { id nome ativa }
   }
 `;
 
-export const ELIMINAR_OBRA: TypedDocumentNode<{ eliminarObra: boolean }, { id: string }> = gql`
-  mutation EliminarObra($id: ID!) {
-    eliminarObra(id: $id)
-  }
-`;
-
-export const ATRIBUIR_OBRA: TypedDocumentNode<
-  { atribuirObra: { id: string; obra: Obra | null } }, { despesaId: string; obraId: string }
+export const ATUALIZAR_CENTRO_CUSTO: TypedDocumentNode<
+  { atualizarCentroCusto: CentroCusto }, { id: string; input: AtualizarCentroCustoInput }
 > = gql`
-  mutation AtribuirObra($despesaId: ID!, $obraId: ID!) {
-    atribuirObra(despesaId: $despesaId, obraId: $obraId) { id obra { id nome ativa } }
+  mutation AtualizarCentroCusto($id: ID!, $input: AtualizarCentroCustoInput!) {
+    atualizarCentroCusto(id: $id, input: $input) { id nome ativa }
+  }
+`;
+
+export const ELIMINAR_CENTRO_CUSTO: TypedDocumentNode<{ eliminarCentroCusto: boolean }, { id: string }> = gql`
+  mutation EliminarCentroCusto($id: ID!) {
+    eliminarCentroCusto(id: $id)
+  }
+`;
+
+export const ATRIBUIR_CENTRO_CUSTO: TypedDocumentNode<
+  { atribuirCentroCusto: { id: string; centroCusto: CentroCusto | null } },
+  { despesaId: string; centroCustoId: string }
+> = gql`
+  mutation AtribuirCentroCusto($despesaId: ID!, $centroCustoId: ID!) {
+    atribuirCentroCusto(despesaId: $despesaId, centroCustoId: $centroCustoId) {
+      id
+      centroCusto { id nome ativa }
+    }
   }
 `;
 
@@ -358,5 +364,24 @@ export const ATUALIZAR_FUNCIONALIDADE: TypedDocumentNode<
 > = gql`
   mutation AtualizarFuncionalidade($chave: String!, $ativa: Boolean!) {
     atualizarFuncionalidade(chave: $chave, ativa: $ativa) { id chave nome ativa }
+  }
+`;
+
+export interface RotulosCentroCusto {
+  singular: string;
+  plural: string;
+}
+
+export const ROTULOS_CENTRO_CUSTO: TypedDocumentNode<{ rotulosCentroCusto: RotulosCentroCusto }> = gql`
+  query RotulosCentroCusto {
+    rotulosCentroCusto { singular plural }
+  }
+`;
+
+export const ATUALIZAR_ROTULOS_CENTRO_CUSTO: TypedDocumentNode<
+  { atualizarRotulosCentroCusto: RotulosCentroCusto }, { singular: string; plural: string }
+> = gql`
+  mutation AtualizarRotulosCentroCusto($singular: String!, $plural: String!) {
+    atualizarRotulosCentroCusto(singular: $singular, plural: $plural) { singular plural }
   }
 `;

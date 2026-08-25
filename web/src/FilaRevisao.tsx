@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import {
-  FILA_REVISAO, SUGESTAO_OBRA, OBRAS, TOTAIS_POR_OBRA,
-  ATRIBUIR_OBRA, CONFIRMAR, ADIAR, ATUALIZAR_VALORES,
+  FILA_REVISAO, SUGESTAO_CENTRO_CUSTO, CENTROS_CUSTO, TOTAIS_POR_CENTRO_CUSTO,
+  ATRIBUIR_CENTRO_CUSTO, CONFIRMAR, ADIAR, ATUALIZAR_VALORES,
 } from "./graphql.js";
 import { Card } from "./ui/Card.js";
 import { ListRow } from "./ui/ListRow.js";
@@ -15,30 +15,32 @@ import { SearchInput } from "./ui/SearchInput.js";
 import { ShortcutButton } from "./ui/ShortcutButton.js";
 import { ProgressBar } from "./ui/ProgressBar.js";
 import { useShortcutBar } from "./ui/AppShell.js";
+import { useRotulosCentroCusto } from "./ui/useRotulosCentroCusto.js";
 import styles from "./FilaRevisao.module.css";
 
 export function FilaRevisao() {
+  const rotulos = useRotulosCentroCusto();
   const { data, refetch } = useQuery(FILA_REVISAO, { fetchPolicy: "cache-and-network" });
-  const { data: obrasData } = useQuery(OBRAS);
-  const { data: totaisData } = useQuery(TOTAIS_POR_OBRA);
-  const [atribuirObra] = useMutation(ATRIBUIR_OBRA);
+  const { data: centrosCustoData } = useQuery(CENTROS_CUSTO);
+  const { data: totaisData } = useQuery(TOTAIS_POR_CENTRO_CUSTO);
+  const [atribuirCentroCusto] = useMutation(ATRIBUIR_CENTRO_CUSTO);
   const [confirmar] = useMutation(CONFIRMAR);
   const [adiar] = useMutation(ADIAR);
   const [atualizarValores] = useMutation(ATUALIZAR_VALORES);
 
   const fila = data?.filaRevisao ?? [];
   const atual = fila[0];
-  const obras = obrasData?.obras ?? [];
-  const totais = totaisData?.totaisPorObra ?? [];
+  const centrosCusto = centrosCustoData?.centrosCusto ?? [];
+  const totais = totaisData?.totaisPorCentroCusto ?? [];
 
-  const { data: sugestaoData } = useQuery(SUGESTAO_OBRA, {
+  const { data: sugestaoData } = useQuery(SUGESTAO_CENTRO_CUSTO, {
     variables: { despesaId: atual?.id ?? "" },
     skip: !atual,
   });
-  const sugestao = sugestaoData?.sugestaoObra ?? null;
+  const sugestao = sugestaoData?.sugestaoCentroCusto ?? null;
 
-  const [obraEscolhidaId, setObraEscolhidaId] = useState<string | null>(null);
-  const [procuraObra, setProcuraObra] = useState("");
+  const [centroCustoEscolhidoId, setCentroCustoEscolhidoId] = useState<string | null>(null);
+  const [procuraCentroCusto, setProcuraCentroCusto] = useState("");
   const [editando, setEditando] = useState(false);
   const [baseTributavel, setBaseTributavel] = useState("");
   const [valorIva, setValorIva] = useState("");
@@ -46,15 +48,15 @@ export function FilaRevisao() {
   const [confirmadas, setConfirmadas] = useState(0);
 
   useEffect(() => {
-    setObraEscolhidaId(sugestao?.obraId ?? null);
-    // dependência em sugestao?.obraId (primitivo), não no objeto sugestao — o objeto
-    // muda de referência a cada leitura da cache mesmo com o mesmo conteúdo
+    setCentroCustoEscolhidoId(sugestao?.centroCustoId ?? null);
+    // dependência em sugestao?.centroCustoId (primitivo), não no objeto sugestao — o
+    // objeto muda de referência a cada leitura da cache mesmo com o mesmo conteúdo
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sugestao?.obraId, atual?.id]);
+  }, [sugestao?.centroCustoId, atual?.id]);
 
   useEffect(() => {
     setEditando(false);
-    setProcuraObra("");
+    setProcuraCentroCusto("");
   }, [atual?.id]);
 
   useEffect(() => {
@@ -64,11 +66,13 @@ export function FilaRevisao() {
     setValorTotal(atual.valorTotal);
   }, [atual]);
 
-  const obrasFiltradas = obras.filter((o) => o.nome.toLowerCase().includes(procuraObra.toLowerCase()));
+  const centrosCustoFiltrados = centrosCusto.filter(
+    (c) => c.nome.toLowerCase().includes(procuraCentroCusto.toLowerCase())
+  );
 
   async function confirmarAtual() {
-    if (!atual || !obraEscolhidaId) return;
-    await atribuirObra({ variables: { despesaId: atual.id, obraId: obraEscolhidaId } });
+    if (!atual || !centroCustoEscolhidoId) return;
+    await atribuirCentroCusto({ variables: { despesaId: atual.id, centroCustoId: centroCustoEscolhidoId } });
     await confirmar({ variables: { despesaId: atual.id } });
     setConfirmadas((c) => c + 1);
     await refetch();
@@ -96,8 +100,8 @@ export function FilaRevisao() {
       else if (e.key.toLowerCase() === "s") adiarAtual();
       else if (e.key.toLowerCase() === "e") setEditando(true);
       else if (/^[1-9]$/.test(e.key)) {
-        const obra = obrasFiltradas[Number(e.key) - 1];
-        if (obra) setObraEscolhidaId(obra.id);
+        const centroCusto = centrosCustoFiltrados[Number(e.key) - 1];
+        if (centroCusto) setCentroCustoEscolhidoId(centroCusto.id);
       }
     }
     window.addEventListener("keydown", onKeyDown);
@@ -109,7 +113,7 @@ export function FilaRevisao() {
       ? [{ keys: "Esc", action: "cancelar edição" }]
       : [
           { keys: "↵", action: "confirmar" },
-          { keys: "1–9", action: "atribuir obra" },
+          { keys: "1–9", action: `atribuir ${rotulos.singular.toLowerCase()}` },
           { keys: "E", action: "editar" },
           { keys: "S", action: "adiar" },
         ]
@@ -184,34 +188,36 @@ export function FilaRevisao() {
 
             <Card>
               <div className={styles.obraPanelHeader}>
-                <Label>Atribuir obra</Label>
+                <Label>Atribuir {rotulos.singular.toLowerCase()}</Label>
                 <div className={styles.searchWrap}>
-                  <SearchInput value={procuraObra} onChange={setProcuraObra} />
+                  <SearchInput value={procuraCentroCusto} onChange={setProcuraCentroCusto} />
                 </div>
               </div>
 
               {sugestao && (
                 <div className={styles.sugestao}>
-                  <span>Sugerida: {obras.find((o) => o.id === sugestao.obraId)?.nome} — {sugestao.motivo}</span>
+                  <span>
+                    Sugerida: {centrosCusto.find((c) => c.id === sugestao.centroCustoId)?.nome} — {sugestao.motivo}
+                  </span>
                   <span>↵ aceita com Enter</span>
                 </div>
               )}
 
               <div className={styles.obraGrid}>
-                {obrasFiltradas.map((o, i) => (
+                {centrosCustoFiltrados.map((c, i) => (
                   <ShortcutButton
-                    key={o.id}
+                    key={c.id}
                     index={i + 1}
-                    label={o.nome}
-                    selected={obraEscolhidaId === o.id}
-                    onClick={() => setObraEscolhidaId(o.id)}
+                    label={c.nome}
+                    selected={centroCustoEscolhidoId === c.id}
+                    onClick={() => setCentroCustoEscolhidoId(c.id)}
                   />
                 ))}
               </div>
             </Card>
 
             <div className={styles.actions}>
-              <Button variant="primary" shortcut="↵" onClick={confirmarAtual} disabled={!obraEscolhidaId}>Confirmar</Button>
+              <Button variant="primary" shortcut="↵" onClick={confirmarAtual} disabled={!centroCustoEscolhidoId}>Confirmar</Button>
               <Button variant="secondary" shortcut="E" onClick={() => setEditando(true)}>Editar</Button>
               <Button variant="secondary" shortcut="S" onClick={adiarAtual}>Adiar</Button>
             </div>
@@ -221,10 +227,10 @@ export function FilaRevisao() {
         )}
 
         <Card padding="sm">
-          <Label>Total por obra</Label>
+          <Label>Total por {rotulos.singular.toLowerCase()}</Label>
           <div className={styles.totaisTitle} />
           {totais.map((t) => (
-            <StatRow key={t.obra.id} label={t.obra.nome} value={`${t.total} €`} />
+            <StatRow key={t.centroCusto.id} label={t.centroCusto.nome} value={`${t.total} €`} />
           ))}
         </Card>
       </div>
